@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-edu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-edu}
+      POSTGRES_DB: ${POSTGRES_DB:-edu}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-edu}:${POSTGRES_PASSWORD:-edu}@postgres:5432/${POSTGRES_DB:-edu}
+      MEDIA_DIR: /app/media
+    volumes:
+      - media:/app/media  # фото рукописных работ (Academic Copilot)
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  bot:
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-edu}:${POSTGRES_PASSWORD:-edu}@postgres:5432/${POSTGRES_DB:-edu}
+    depends_on:
+      backend:
+        condition: service_healthy  # миграции уже применены
+
+  web:
+    build:
+      context: web
+      args:
+        BACKEND_INTERNAL_URL: http://backend:8000
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
+  media:

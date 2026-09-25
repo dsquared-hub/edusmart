@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edu-backend"
+version = "0.2.0"
+description = "Общее ядро образовательной платформы: БД, объяснения Gemini, очки, API"
+requires-python = ">=3.11"
+dependencies = [
+    "SQLAlchemy[asyncio]>=2.0,<3.0",
+    "asyncpg>=0.29",
+    "aiosqlite>=0.20",
+    "alembic>=1.13",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "python-multipart>=0.0.9",
+    "PyJWT>=2.8",
+    "google-genai>=1.0",
+    "tzdata",
+    # Предобработка фото рукописных работ (поворот, контраст, размер) и фото с iPhone (HEIC)
+    "pillow>=10",
+    "pillow-heif>=0.16",
+    # Генерация уроков по учебнику (Модуль 5.2): разбор PDF и экспорт в DOCX
+    "pymupdf>=1.24",
+    "python-docx>=1.1",
+    # Семейный аккаунт (Модуль 4): SMS через шлюз (Eskiz.uz) и QR-код приглашения
+    "httpx>=0.27",
+    "segno>=1.6",
+    # PWA: Web Push-уведомления без Telegram
+    "pywebpush>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "httpx>=0.27"]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.setuptools.package-data]
+app = ["locales/*.json", "data/*.json"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]

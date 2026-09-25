@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============ Токены дизайн-системы ============
+   Цвета — RGB-тройки: Tailwind подставляет их в rgb(var(--c-x) / alpha).
+   Пары «текст/фон» подобраны под WCAG AA (≥ 4.5:1 для обычного текста). */
+
+:root,
+[data-theme="light"] {
+  --c-bg: 250 246 239;       /* #FAF6EF молочный фон */
+  --c-surface: 255 251 245;  /* поднятые панели */
+  --c-card: 243 234 217;     /* #F3EAD9 кремовые карточки */
+  --c-latte: 217 194 163;    /* #D9C2A3 латте */
+  --c-caramel: 185 138 94;   /* #B98A5E карамель — акцент, декор */
+  --c-coffee: 122 82 54;     /* #7A5236 кофейный — заголовки, основные кнопки */
+  --c-ink: 62 42 30;         /* #3E2A1E тёмный шоколад — текст */
+  --c-muted: 124 95 73;      /* вторичный текст, AA на молочном */
+  --c-line: 232 219 198;
+  --c-gold: 232 182 76;      /* #E8B64C монеты, награды */
+  --c-good: 74 135 83;       /* мягкий зелёный (темнее #6FA876 — для читаемости текста) */
+  --c-bad: 190 98 72;        /* мягкий терракотовый */
+  --c-on-caramel: 255 250 242;
+  --c-shadow: 62 42 30;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --c-bg: 30 21 16;          /* #1E1510 */
+  --c-surface: 42 30 23;     /* #2A1E17 */
+  --c-card: 58 42 32;        /* #3A2A20 */
+  --c-latte: 110 86 64;
+  --c-caramel: 209 160 110;
+  --c-coffee: 232 192 146;   /* светлый латте: заголовки и кнопки на тёмном */
+  --c-ink: 243 234 217;      /* #F3EAD9 молочный текст */
+  --c-muted: 203 181 151;
+  --c-line: 78 58 44;
+  --c-gold: 240 196 96;
+  --c-good: 131 190 138;
+  --c-bad: 232 142 116;
+  --c-on-caramel: 30 21 16;
+  --c-shadow: 0 0 0;
+  color-scheme: dark;
+}
+
+/* Режимы подачи: Junior — крупнее и мягче, Senior — плотнее */
+:root {
+  --radius-card: 1.5rem;
+  --tap: 3rem; /* минимум 48px зона нажатия */
+  font-size: 16px;
+}
+[data-mode="junior"] {
+  --radius-card: 1.75rem;
+  --tap: 3.5rem;
+  font-size: 17.5px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  @apply bg-bg font-sans text-ink antialiased;
+  min-height: 100dvh;
+}
+:focus-visible {
+  outline: 3px solid rgb(var(--c-gold));
+  outline-offset: 3px;
+  border-radius: 0.75rem;
+}
+::selection {
+  background: rgb(var(--c-gold) / 0.45);
+}
+
+@layer components {
+  .card {
+    @apply bg-surface shadow-soft;
+    border-radius: var(--radius-card);
+    border: 1px solid rgb(var(--c-line));
+  }
+  .card-cream {
+    @apply bg-card;
+    border-radius: var(--radius-card);
+  }
+  .glass {
+    background: rgb(var(--c-surface) / 0.72);
+    backdrop-filter: blur(14px) saturate(1.2);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    border: 1px solid rgb(var(--c-line) / 0.8);
+  }
+
+  /* Кнопки: объёмные, «проваливаются» при нажатии */
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-2xl px-5 font-extrabold transition
+      duration-150 disabled:cursor-not-allowed disabled:opacity-50;
+    min-height: var(--tap);
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(2px) scale(0.99);
+  }
+  .btn-primary {
+    @apply bg-coffee text-on-caramel shadow-press hover:brightness-110;
+  }
+  .btn-gold {
+    @apply bg-gold text-[#3E2A1E] shadow-press hover:brightness-105;
+  }
+  .btn-soft {
+    @apply border border-line bg-surface text-ink hover:bg-card;
+  }
+  .btn-ghost {
+    @apply text-coffee hover:bg-card;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm font-bold
+      text-ink transition hover:bg-card;
+  }
+  .chip[aria-pressed="true"],
+  .chip[aria-selected="true"] {
+    @apply border-coffee bg-coffee text-on-caramel;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-extrabold;
+  }
+
+  .field {
+    @apply w-full rounded-2xl border border-line bg-surface px-4 text-base font-semibold text-ink
+      placeholder:text-muted/70 transition focus:border-coffee focus:outline-none focus:ring-4 focus:ring-gold/30;
+    min-height: var(--tap);
+  }
+
+  .h-display {
+    @apply text-3xl font-black tracking-tight text-coffee md:text-4xl;
+  }
+  .h-title {
+    @apply text-xl font-black text-coffee;
+  }
+  .label {
+    @apply text-xs font-extrabold uppercase tracking-wider text-muted;
+  }
+}
+
+/* 3D-монета: объём из градиентов, ребро — из тени */
+.coin3d {
+  background: radial-gradient(circle at 32% 28%, #fff3c4 0 12%, #f3cf6f 30%, #e8b64c 58%, #b8862a 100%);
+  box-shadow: inset 0 -3px 0 #a87722, inset 0 2px 1px #fff6d0, 0 3px 6px rgb(62 42 30 / 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

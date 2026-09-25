@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EDU — нет сети</title>
+<style>
+  :root { color-scheme: light dark; --bg: #fff8ec; --fg: #3b2f22; --muted: #7a6a58; --btn: #f59e0b; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1d1a16; --fg: #f5ede2; --muted: #b8a996; } }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--fg);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; text-align: center; padding: 16px; box-sizing: border-box; }
+  img { width: 128px; height: 128px; border-radius: 28px; }
+  h1 { font-size: 22px; margin: 16px 0 4px; }
+  p { color: var(--muted); margin: 4px 0; }
+  button { margin-top: 20px; border: 0; border-radius: 14px; padding: 12px 24px; font: 700 16px system-ui, sans-serif;
+           background: var(--btn); color: #fff; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <img src="/icons/icon-192.png" alt="">
+  <h1>Нет интернета</h1>
+  <p>Internet yo‘q · No connection</p>
+  <p>Проверь Wi‑Fi или мобильные данные и попробуй снова.</p>
+  <button type="button" onclick="location.reload()">Обновить</button>
+</main>
+</body>
+</html>

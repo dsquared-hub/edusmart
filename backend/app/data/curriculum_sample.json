@@ -1,0 +1,57 @@
+{
+  "_note": "ОБРАЗЕЦ программы для демо и тестов. Официальную программу Министерства просвещения загрузите через scripts/load_curriculum.py (тот же формат).",
+  "subjects": [
+    {
+      "code": "math", "grade": 5,
+      "name": {"uz": "Matematika", "ru": "Математика", "en": "Mathematics"},
+      "topics": [
+        {"uz": "Natural sonlar", "ru": "Натуральные числа", "en": "Natural numbers"},
+        {"uz": "Qoʻshish va ayirish", "ru": "Сложение и вычитание", "en": "Addition and subtraction"},
+        {"uz": "Koʻpaytirish va boʻlish", "ru": "Умножение и деление", "en": "Multiplication and division"},
+        {"uz": "Oddiy kasrlar", "ru": "Обыкновенные дроби", "en": "Common fractions"},
+        {"uz": "Kasrlarni qoʻshish", "ru": "Сложение дробей", "en": "Adding fractions"},
+        {"uz": "Oʻnli kasrlar", "ru": "Десятичные дроби", "en": "Decimal fractions"},
+        {"uz": "Foizlar", "ru": "Проценты", "en": "Percentages"},
+        {"uz": "Toʻgʻri toʻrtburchak yuzi", "ru": "Площадь прямоугольника", "en": "Rectangle area"}
+      ]
+    },
+    {
+      "code": "math", "grade": 7,
+      "name": {"uz": "Matematika (algebra, geometriya)", "ru": "Математика (алгебра, геометрия)", "en": "Mathematics (algebra, geometry)"},
+      "topics": [
+        {"uz": "Algebraik ifodalar", "ru": "Алгебраические выражения", "en": "Algebraic expressions"},
+        {"uz": "Chiziqli tenglamalar", "ru": "Линейные уравнения", "en": "Linear equations"},
+        {"uz": "Daraja va uning xossalari", "ru": "Степень и её свойства", "en": "Powers and their properties"},
+        {"uz": "Birhadlar va koʻphadlar", "ru": "Одночлены и многочлены", "en": "Monomials and polynomials"},
+        {"uz": "Qisqa koʻpaytirish formulalari", "ru": "Формулы сокращённого умножения", "en": "Short multiplication formulas"},
+        {"uz": "Chiziqli funksiya", "ru": "Линейная функция", "en": "Linear function"},
+        {"uz": "Uchburchaklar", "ru": "Треугольники", "en": "Triangles"},
+        {"uz": "Parallel toʻgʻri chiziqlar", "ru": "Параллельные прямые", "en": "Parallel lines"},
+        {"uz": "Trapetsiya yuzi", "ru": "Площадь трапеции", "en": "Trapezoid area"}
+      ]
+    },
+    {
+      "code": "physics", "grade": 7,
+      "name": {"uz": "Fizika", "ru": "Физика", "en": "Physics"},
+      "topics": [
+        {"uz": "Fizik kattaliklar va oʻlchash", "ru": "Физические величины и измерения", "en": "Physical quantities and measurement"},
+        {"uz": "Mexanik harakat va tezlik", "ru": "Механическое движение и скорость", "en": "Mechanical motion and speed"},
+        {"uz": "Massa va zichlik", "ru": "Масса и плотность", "en": "Mass and density"},
+        {"uz": "Kuch. Nyuton qonunlari", "ru": "Сила. Законы Ньютона", "en": "Force. Newton's laws"},
+        {"uz": "Bosim", "ru": "Давление", "en": "Pressure"},
+        {"uz": "Ish va quvvat", "ru": "Работа и мощность", "en": "Work and power"}
+      ]
+    },
+    {
+      "code": "english", "grade": 7,
+      "name": {"uz": "Ingliz tili", "ru": "Английский язык", "en": "English"},
+      "topics": [
+        {"uz": "Present Simple", "ru": "Present Simple", "en": "Present Simple"},
+        {"uz": "Present Continuous", "ru": "Present Continuous", "en": "Present Continuous"},
+        {"uz": "Past Simple", "ru": "Past Simple", "en": "Past Simple"},
+        {"uz": "Present Perfect", "ru": "Present Perfect", "en": "Present Perfect"},
+        {"uz": "Sifatlarning qiyosiy darajasi", "ru": "Степени сравнения прилагательных", "en": "Comparative adjectives"}
+      ]
+    }
+  ]
+}

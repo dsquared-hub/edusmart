@@ -1,0 +1,26 @@
+.env
+venv/
+.venv/
+.venv-*/
+.ruff_cache/
+*.db.bak*
+.claude/settings.local.json
+__pycache__/
+*.pyc
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite3
+*.log
+deploy/backups/
+.pytest_cache/
+*.egg-info/
+
+node_modules/
+web/.next/
+web/.next-*/
+web/tsconfig.tsbuildinfo
+prototype/dist/
+# фото рукописных работ учеников — персональные данные, не в git
+backend/media/

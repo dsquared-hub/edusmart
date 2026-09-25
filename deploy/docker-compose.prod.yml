@@ -1,0 +1,115 @@
+# Боевой запуск: HTTPS (Caddy, сертификат Let's Encrypt автоматически),
+# PostgreSQL без доступа извне, ежедневные резервные копии.
+#
+#   cd deploy
+#   docker compose -f docker-compose.prod.yml --env-file ../.env up -d --build
+#
+# Подробно — DEPLOY.md в корне проекта.
+
+x-db-url: &db_url postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?Укажи DOMAIN в .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+      web:
+        condition: service_started
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Задай длинный POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    # наружу не публикуется: доступ только из сети compose
+
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      DATABASE_URL: *db_url
+      WEB_URL: https://${DOMAIN}
+      CORS_ORIGINS: https://${DOMAIN}
+      MEDIA_DIR: /app/media  # явно: локальный путь из .env не должен попасть в контейнер
+    volumes:
+      - media:/app/media  # фото рукописных работ — переживают пересборку контейнера
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+
+  bot:
+    build:
+      context: ..
+      dockerfile: bot/Dockerfile
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      DATABASE_URL: *db_url
+      WEB_URL: https://${DOMAIN}
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ../web
+      args:
+        BACKEND_INTERNAL_URL: http://backend:8000
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+    volumes:
+      - ./backups:/backups
+      - ./backup.sh:/backup.sh:ro
+      - media:/media:ro
+    entrypoint: ["sh", "/backup.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  media:
+  caddy_data:
+  caddy_config:

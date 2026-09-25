@@ -1,0 +1,4 @@
+# Общее ядро (БД, Gemini, очки) ставится из ../backend:
+#   pip install -e ../backend
+aiogram>=3.13,<4.0
+APScheduler>=3.10,<4.0
