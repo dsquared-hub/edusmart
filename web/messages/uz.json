@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Tushunib olamiz!",
+    "name": "EDU PROGRESSUZ",
     "loading": "Yuklanmoqda…"
   },
   "login": {
@@ -375,7 +375,7 @@
   },
   "pwa": {
     "section": "Ilova va bildirishnomalar",
-    "install": "EDU ni telefonga o‘rnatish",
+    "install": "EDU PROGRESSUZ ni telefonga o‘rnatish",
     "install_hint": "Bosh ekranda belgi — oddiy ilova kabi ochiladi",
     "ios_hint": "iPhone’da: «Ulashish» ⬆️ → «Bosh ekranga» ni bosing. iPhone’da bildirishnomalar faqat o‘rnatilgan ilovada ishlaydi.",
     "installed": "Ilova o‘rnatildi ✓",

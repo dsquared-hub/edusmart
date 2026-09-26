@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Let's figure it out!",
+    "name": "EDU PROGRESSUZ",
     "loading": "Loading…"
   },
   "login": {
@@ -375,7 +375,7 @@
   },
   "pwa": {
     "section": "App and notifications",
-    "install": "Install EDU on your phone",
+    "install": "Install EDU PROGRESSUZ on your phone",
     "install_hint": "An icon on the home screen — opens like a regular app",
     "ios_hint": "On iPhone: tap Share ⬆️ → Add to Home Screen. On iPhone, notifications only work from the installed app.",
     "installed": "App installed ✓",

@@ -1,4 +1,4 @@
-// Service worker EDU: установка как приложение, офлайн-заглушка и Web Push.
+// Service worker EDU PROGRESSUZ: установка как приложение, офлайн-заглушка и Web Push.
 // API не кэшируем никогда — там личные данные; страницы всегда берём из сети.
 const VERSION = "edu-v2"; // новая модель в /models/ — поменяй версию, чтобы сбросить кэш
 const SHELL = ["/offline.html", "/icons/icon-192.png", "/manifest.webmanifest"];
@@ -53,7 +53,7 @@ self.addEventListener("push", (event) => {
     data = { body: event.data ? event.data.text() : "" };
   }
   event.waitUntil(
-    self.registration.showNotification(data.title || "EDU", {
+    self.registration.showNotification(data.title || "EDU PROGRESSUZ", {
       body: data.body || "",
       tag: data.tag || undefined,
       renotify: Boolean(data.tag),

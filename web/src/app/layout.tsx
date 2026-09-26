@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title: ru.app.name,
   description: ru.home.cta_hint,
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "EDU", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "EDU PROGRESSUZ", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

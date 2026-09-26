@@ -43,7 +43,7 @@ async def test_start_offers_parent_and_teacher(h, adults_only):
     assert "Кто вы" in msg.text and "https://edu.example.com/" in msg.text
     assert h.callback_data(msg) == ["role:parent", "role:teacher", "lang:menu"]
     await h.press(KID, "role:student", name="Тимур")  # старая кнопка
-    assert "приложении EDU" in h.api.alerts()[-1]
+    assert "приложении EDU PROGRESSUZ" in h.api.alerts()[-1]
 
     await h.press(KID, "role:teacher", name="Тимур")
     ask = h.api.last(KID)
