@@ -26,7 +26,7 @@ async def test_check_ready_then_grade_reaches_parent_and_student(h):
     async with SessionLocal() as s:
         code = (await get_student(s, kid_id)).family_code
     await h.send(TEACHER, "/start", name="Учитель")
-    await h.press(TEACHER, "role:teacher", name="Учитель")
+    await h.register(TEACHER, "teacher", name="Учитель")
     await h.press(TEACHER, "teacher:bind", name="Учитель")
     await h.send(TEACHER, code, name="Учитель")
 

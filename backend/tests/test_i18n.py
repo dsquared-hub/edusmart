@@ -44,3 +44,4 @@ def test_current_language_and_fallback():
     set_current_lang("xx")  # неизвестный — русский
     assert t("btn_help") == "📘 Не понял тему"
     assert lang_from_telegram("uz-UZ") == "uz" and lang_from_telegram(None) == "ru"
+    assert lang_from_telegram("en") == "ru"  # английский — только выбором в меню

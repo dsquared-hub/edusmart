@@ -7,6 +7,7 @@ import { Mascot } from "@/components/Mascot";
 import { IconButton, Notice, Page, Splash } from "@/components/ui";
 import { errorCode } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { homePath } from "@/lib/cabinet";
 import { useT } from "@/lib/i18n";
 import {
   canInstall,
@@ -24,7 +25,7 @@ import { THEMES, type Theme, type UserSettings } from "@/lib/types";
 
 // Превью темы — фиксированные цвета, чтобы было видно, как она выглядит
 const SWATCH: Record<Theme, { bg: string; primary: string; accent: string; icon: string }> = {
-  sun: { bg: "#fff8ec", primary: "#ff9632", accent: "#ffcd3c", icon: "☀️" },
+  sun: { bg: "#f5ecde", primary: "#6f4226", accent: "#00d6c4", icon: "☕" }, // «Капучино»
   ocean: { bg: "#ecf5ff", primary: "#2a6ce2", accent: "#1ec4e8", icon: "🌊" },
   forest: { bg: "#eef8ee", primary: "#20864a", accent: "#a0d250", icon: "🌲" },
   berry: { bg: "#fcf0fa", primary: "#983ac4", accent: "#ff6ea6", icon: "🍇" },
@@ -177,7 +178,7 @@ export default function ProfilePage() {
   return (
     <Page className="gap-5">
       <header className="flex items-center gap-3">
-        <IconButton href={me.role === "parent" || me.role === "teacher" ? "/journal" : "/"} label={t("profile.back")}>
+        <IconButton href={homePath(me.role)} label={t("profile.back")}>
           ‹
         </IconButton>
         <h1 className="flex-1 text-2xl font-black">{t("profile.title")}</h1>

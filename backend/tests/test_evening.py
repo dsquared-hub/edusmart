@@ -20,7 +20,7 @@ from app.services.accounts import choose_role
 from app.services.curriculum import SAMPLE, load_curriculum, match_topic
 from app.services.gamification import mark_active
 from app.services.questions import StubQuestionGenerator, pick_question
-from test_api import KID_TG, login, make_student
+from test_api import CORRECT, KID_TG, login, make_student
 
 PARENT_TG = KID_TG + 1
 
@@ -228,3 +228,29 @@ async def test_parent_report_and_assignment(client, curriculum, evening_time):
     assert (await client.get(f"/api/v1/family/report?student_id={kid_id}", headers=stranger)).status_code == 404
     assert (await client.post("/api/v1/assignments", json={"student_id": kid_id, "topic_id": t_id}, headers=stranger)).status_code == 404
     assert (await client.get(f"/api/v1/readiness?student_id={kid_id}", headers=stranger)).status_code == 404
+
+
+async def test_assignment_closes_when_topic_is_learned(client, curriculum):
+    """Задание открывает «Объясни тему» с этой темой и закрывается, когда тема пройдена."""
+    kid_id = await seven_grader()
+    t_id = await topic_id("Площадь трапеции")
+    parent = await login(client, KID_TG + 1)
+    r = await client.post("/api/v1/assignments", json={"student_id": kid_id, "topic_id": t_id}, headers=parent)
+    assignment_id = r.json()["id"]
+    kid = await login(client)
+    assert len((await client.get("/api/v1/assignments", headers=kid)).json()["assignments"]) == 1
+
+    # чужое задание не привязывает тему
+    other = await make_student(tg_id=7100)
+    foreign = await client.post("/api/v1/assignments", json={"student_id": other, "topic_id": t_id}, headers=await login(client, 7101))
+    r = await client.post("/api/explain", data={"title": "что-то", "assignment_id": str(foreign.json()["id"])}, headers=kid)
+    async with SessionLocal() as s:
+        assert (await s.get(Topic, r.json()["id"])).curriculum_topic_id != t_id
+
+    r = await client.post("/api/explain", data={"title": "Площадь трапеции", "assignment_id": str(assignment_id)}, headers=kid)
+    tid = r.json()["id"]
+    for step, option in enumerate(CORRECT):
+        await client.post(f"/api/explain/{tid}/answer", json={"step": step, "option": option}, headers=kid)
+    assert (await client.get("/api/v1/assignments", headers=kid)).json()["assignments"] == []
+    other_list = (await client.get("/api/v1/assignments", headers=await login(client, 7100))).json()["assignments"]
+    assert len(other_list) == 1  # чужое задание не тронуто

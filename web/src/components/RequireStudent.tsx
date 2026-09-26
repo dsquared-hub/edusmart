@@ -3,13 +3,14 @@
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import { homePath } from "@/lib/cabinet";
 import { useT } from "@/lib/i18n";
 import { Mascot } from "./Mascot";
 import { Page, Splash } from "./ui";
 
 const isAdult = (role: string | null | undefined) => role === "parent" || role === "teacher";
 
-/** Страницы учеников: гость → /login, родитель/учитель → журнал результатов,
+/** Страницы учеников: гость → /login, родитель/учитель → свой кабинет,
  *  без роли — подсказка. */
 export function RequireStudent({ children }: { children: ReactNode }) {
   const { status, me } = useAuth();
@@ -21,7 +22,7 @@ export function RequireStudent({ children }: { children: ReactNode }) {
       const next = window.location.pathname + window.location.search;
       router.replace(`/login?next=${encodeURIComponent(next)}`);
     } else if (status === "authed" && isAdult(me?.role)) {
-      router.replace("/journal");
+      router.replace(homePath(me?.role));
     }
   }, [status, me, router]);
 

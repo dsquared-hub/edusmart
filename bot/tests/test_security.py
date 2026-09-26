@@ -87,11 +87,9 @@ async def test_topic_too_long(h):
 async def test_names_are_html_escaped(h):
     await _student_with_consent(h)
     await h.send(TEACHER, "/start", name="Учитель")
-    await h.press(TEACHER, "role:teacher", name="Учитель")
+    await h.register(TEACHER, "teacher", name="Учитель")
     await h.press(TEACHER, "access:new", name="Учитель")
     await h.send(TEACHER, "<b>Вася</b> & Co", name="Учитель")
-    assert "&lt;b&gt;Вася&lt;/b&gt; &amp; Co" in h.api.last(TEACHER).text
-    await h.press(TEACHER, "reg:grade:7", name="Учитель")
     assert "&lt;b&gt;Вася&lt;/b&gt; &amp; Co" in h.api.last(TEACHER).text
     await h.send(TEACHER, "/class", name="Учитель")
     assert "&lt;b&gt;Вася" in h.api.last(TEACHER).text

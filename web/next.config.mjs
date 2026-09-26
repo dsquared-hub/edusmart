@@ -13,7 +13,8 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://t.me https://*.telegram.org",
   "font-src 'self'",
-  "connect-src 'self'",
+  // blob:/data: — 3D-маскот: three.js читает встроенные в glb текстуры через fetch(blob:)
+  "connect-src 'self' blob: data:",
   // PWA: service worker (офлайн + Web Push) и манифест только со своего домена
   "worker-src 'self'",
   "manifest-src 'self'",
@@ -29,7 +30,8 @@ const securityHeaders = [
   { key: "Content-Security-Policy", value: csp },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(), payment=()" },
+  // microphone=(self) — IELTS Speaking: ответы голосом (запись в память, на сервере не хранится)
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=(), payment=()" },
 ];
 
 /** @type {import('next').NextConfig} */

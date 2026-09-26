@@ -30,6 +30,7 @@ function Editor({ id }: { id: number }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [sent, setSent] = useState<number | null>(null);
 
   useEffect(() => {
     api<Material>(`/v1/teacher/materials/${id}`)
@@ -82,6 +83,20 @@ function Editor({ id }: { id: number }) {
       URL.revokeObjectURL(url);
     } catch (e) {
       setError(errorCode(e));
+    }
+  };
+
+  // Stories — в ленту всем привязанным ученикам (сохранённая версия материалов)
+  const sendStories = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await api<{ sent: number }>(`/v1/teacher/materials/${id}/stories`, { method: "POST" });
+      setSent(r.sent);
+    } catch (e) {
+      setError(errorCode(e));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -150,7 +165,14 @@ function Editor({ id }: { id: number }) {
           </section>
 
           <section className={`${section("stories")} flex-col gap-3`}>
-            <h2 className="text-xl font-black">{t("materials.tab.stories")}</h2>
+            <div className="flex flex-wrap items-center gap-2 print:hidden">
+              <h2 className="flex-1 text-xl font-black">{t("materials.tab.stories")}</h2>
+              <button className="btn btn-primary !min-h-[2.75rem] !w-auto px-4" onClick={sendStories} disabled={busy || dirty}>
+                📤 {t("materials.send_stories")}
+              </button>
+            </div>
+            <h2 className="hidden text-xl font-black print:block">{t("materials.tab.stories")}</h2>
+            {sent !== null && <Notice>✅ {t("materials.stories_sent", { n: sent })}</Notice>}
             {content.stories.map((s, i) => (
               <div key={i} className="card flex flex-col gap-2 break-inside-avoid">
                 <div className="label">

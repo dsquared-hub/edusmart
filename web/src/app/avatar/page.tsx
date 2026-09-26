@@ -8,6 +8,7 @@ import { RequireStudent } from "@/components/RequireStudent";
 import { Dots, IconButton, Notice, Page, Splash } from "@/components/ui";
 import { api, errorCode } from "@/lib/api";
 import { useT } from "@/lib/i18n";
+import { publishMyAvatar } from "@/lib/myAvatar";
 
 type Slot = "hat" | "outfit" | "glasses" | "extra" | "background";
 type Item = { code: string; slot: Slot; price: number; min_level: number };
@@ -91,6 +92,11 @@ function AvatarScreen() {
   useEffect(() => {
     api<AvatarState>("/v1/avatar").then(setState).catch((e) => setError(errorCode(e)));
   }, []);
+
+  // Новый образ сразу виден везде, где маскот (главная, профиль, уроки)
+  useEffect(() => {
+    if (state) publishMyAvatar(state);
+  }, [state]);
 
   if (!state) return error ? <Page><Notice tone="error">{t(`errors.${error}`)}</Notice></Page> : <Splash />;
 
@@ -183,7 +189,7 @@ function AvatarScreen() {
               role="tab"
               aria-selected={slot === s}
               aria-pressed={slot === s}
-              className="chip min-w-0 justify-center truncate px-1 text-xs sm:text-sm"
+              className="chip min-w-0 justify-center px-0.5 text-[11px] sm:text-sm"
               onClick={() => setSlot(s)}
             >
               {t(`avatar.slots.${s}`)}
@@ -208,7 +214,7 @@ function AvatarScreen() {
                   } ${locked ? "opacity-60" : ""}`}
                 >
                   <span className="text-3xl" aria-hidden="true">{ICON[i.code]}</span>
-                  <span className="w-full truncate text-xs font-extrabold">{t(`avatar.items.${i.code}`)}</span>
+                  <span className="line-clamp-2 min-h-[2rem] w-full text-xs font-extrabold leading-tight">{t(`avatar.items.${i.code}`)}</span>
                   <span className="text-xs font-bold text-muted">
                     {worn ? `✅ ${t("avatar.worn")}` : owned ? t("avatar.owned") : locked ? t("avatar.locked", { level: i.min_level }) : `${i.price} 🪙`}
                   </span>

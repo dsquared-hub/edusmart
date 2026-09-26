@@ -28,8 +28,19 @@ DIFFICULTY_TEXT = {
 }
 
 
+class QuotaExceeded(GeminiError):
+    """Лимит ключа Gemini исчерпан (429 RESOURCE_EXHAUSTED): новые запросы сейчас бесполезны."""
+
+
+def is_quota_error(exc: Exception) -> bool:
+    text = str(exc)
+    return "RESOURCE_EXHAUSTED" in text or "429" in text.split(" ", 1)[0]
+
+
 class QuestionGenerator(Protocol):
-    async def generate(self, topic: str, subject: str, grade: int, difficulty: int, lang: str) -> list[dict]: ...
+    async def generate(
+        self, topic: str, subject: str, grade: int, difficulty: int, lang: str, count: int = BATCH, purpose: str = "evening"
+    ) -> list[dict]: ...
 
 
 def validate_questions(data) -> list[dict]:
@@ -67,17 +78,35 @@ class GeminiQuestionGenerator:
         self.model = settings.gemini_model
 
     async def _json(self, prompt: str, system: str, temperature: float) -> dict:
-        response = await self.client.aio.models.generate_content(
-            model=self.model,
-            contents=[prompt],
-            config=self._types.GenerateContentConfig(system_instruction=system, response_mime_type="application/json", temperature=temperature),
-        )
-        return extract_json(response.text or "")
+        last: Exception | None = None
+        for _ in range(2):  # битый JSON (обрыв длинного ответа) — просим ещё раз
+            try:
+                response = await self.client.aio.models.generate_content(
+                    model=self.model,
+                    contents=[prompt],
+                    config=self._types.GenerateContentConfig(
+                        system_instruction=system, response_mime_type="application/json", temperature=temperature
+                    ),
+                )
+            except Exception as exc:
+                if is_quota_error(exc):
+                    raise QuotaExceeded(str(exc)) from exc  # лимит ключа — повтор не поможет
+                raise
+            try:
+                return extract_json(response.text or "")
+            except (ValueError, GeminiError) as exc:
+                last = exc
+        raise GeminiError(f"Некорректный JSON: {last}")
 
-    async def generate(self, topic, subject, grade, difficulty, lang) -> list[dict]:
+    async def generate(self, topic, subject, grade, difficulty, lang, count=BATCH, purpose="evening") -> list[dict]:
+        what = (
+            "для тренировочного варианта вступительного теста ДТМ (как на настоящем экзамене в вуз Узбекистана)"
+            if purpose == "dtm"
+            else "для короткого вечернего теста"
+        )
         prompt = (
             f"Предмет: {subject}, {grade} класс. Тема программы: «{topic}».\n"
-            f"Составь {BATCH} разных вопроса для короткого вечернего теста. Сложность — {DIFFICULTY_TEXT[difficulty]}.\n"
+            f"Составь {count} разных вопросов {what}. Сложность — {DIFFICULTY_TEXT[difficulty]}.\n"
             "У каждого 3–4 коротких варианта ответа, ровно один верный (correct — индекс с 0), "
             "explanation — 1–2 предложения, почему верный ответ верный (ученик увидит после ошибки).\n"
             f"{language_rule(lang)}\n"
@@ -92,6 +121,8 @@ class GeminiQuestionGenerator:
             payload = [{"n": i, "context": topic, "question": q["question"], "options": q["options"], "marked_correct": q["correct"]}
                        for i, q in enumerate(questions)]
             verdicts = validate_verdicts(await self._json(f"Вопросы:\n{json.dumps(payload, ensure_ascii=False)}", VERIFIER_PROMPT, 0.0), questions)
+        except QuotaExceeded:
+            raise
         except Exception as exc:
             raise GeminiError(f"Вопросы не сгенерированы: {exc}") from exc
         if verdicts is None:
@@ -105,10 +136,10 @@ class StubQuestionGenerator:
     def __init__(self):
         self.calls = 0
 
-    async def generate(self, topic, subject, grade, difficulty, lang) -> list[dict]:
+    async def generate(self, topic, subject, grade, difficulty, lang, count=BATCH, purpose="evening") -> list[dict]:
         self.calls += 1
         out = []
-        for i in range(BATCH):
+        for i in range(count):
             a, b = (3 + i) * difficulty, (2 + i) * difficulty + self.calls
             right = a + b if difficulty < 3 else a * b
             sign = "+" if difficulty < 3 else "×"

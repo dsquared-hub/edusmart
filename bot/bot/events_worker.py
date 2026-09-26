@@ -19,6 +19,7 @@ from app.services.explain import EVENT_CONTENT_REPORT, EVENT_TOPIC_COMPLETED
 from app.services.evening import EVENT_EVENING_DONE, EVENT_EVENING_MISSED
 from app.services.evening import summary as evening_summary
 from app.services.family_report import EVENT_ASSIGNMENT_NEW
+from app.services.parent_day import EVENT_PARENT_DAY
 from app.services.support import EVENT_SUPPORT_NEW
 from app.services.work_checks import EVENT_CHECK_READY, EVENT_WORK_GRADED, check_items, review_level
 from bot.handlers.support import ticket_card
@@ -194,6 +195,26 @@ async def _notify_evening_missed(bot, session, payload: dict) -> None:
         await _send(bot, parent, t("evening_missed_parent", name=name))
 
 
+def parent_day_key(missed_days: int) -> str:
+    """Обычное напоминание, «вчера пропустил» или тревога — с 2 пропущенных дней подряд."""
+    return "parent_day_alert" if missed_days >= 2 else "parent_day_missed" if missed_days == 1 else "parent_day"
+
+
+async def _notify_parent_day(bot, session, payload: dict) -> None:
+    """16:30: «вечерний тест в 17:00, 2 минуты» + неделя 🟢/🔴 и тревога о пропусках."""
+    student = await get_user(session, payload["student_user_id"])
+    if student is None:
+        return
+    missed = int(payload.get("missed_days", 0))
+    for parent in await get_parents_of(session, student.id):
+        set_current_lang(parent.lang)
+        name = escape(student.full_name or t("default_child"))
+        text = t(parent_day_key(missed), name=name, n=missed, start=get_settings().evening_start)
+        if payload.get("week"):
+            text += "\n" + t("parent_day_week", week=payload["week"])
+        await _send(bot, parent, text)
+
+
 async def _notify_assignment(bot, session, payload: dict) -> None:
     """«Прислать ребёнку задание» — ученику в бот."""
     item = await session.get(Assignment, payload["assignment_id"])
@@ -219,6 +240,7 @@ HANDLERS = {
     EVENT_EVENING_DONE: _notify_evening_done,
     EVENT_EVENING_MISSED: _notify_evening_missed,
     EVENT_ASSIGNMENT_NEW: _notify_assignment,
+    EVENT_PARENT_DAY: _notify_parent_day,
 }
 
 

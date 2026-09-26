@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Dots, IconButton, Notice, Page, Splash } from "@/components/ui";
 import { api, errorCode } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { homePath } from "@/lib/cabinet";
 import { useT } from "@/lib/i18n";
 
 type Light = "green" | "yellow" | "red";
@@ -112,7 +113,7 @@ function ReportView({ id }: { id: number }) {
   return (
     <Page className="gap-5 lg:max-w-4xl">
       <header className="flex items-center gap-3">
-        <IconButton href="/journal" label={t("profile.back")}>‹</IconButton>
+        <IconButton href={homePath(me?.role)} label={t("profile.back")}>‹</IconButton>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-2xl font-black">📊 {report?.student.name ?? t("report.title")}</h1>
           {report && (

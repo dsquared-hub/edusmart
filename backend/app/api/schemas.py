@@ -19,14 +19,6 @@ class CodeAuthIn(BaseModel):
     code: str = Field(min_length=4, max_length=12)
 
 
-class BotLoginStartIn(BaseModel):
-    as_role: Literal["student", "teacher"] | None = None
-
-
-class BotLoginPollIn(BaseModel):
-    token: str = Field(min_length=16, max_length=64)
-
-
 class SettingsIn(BaseModel):
     theme: Literal["sun", "ocean", "forest", "berry"] | None = None
     high_contrast: bool | None = None

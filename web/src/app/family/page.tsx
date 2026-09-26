@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Dots, IconButton, Notice, Page, Splash } from "@/components/ui";
 import { api, errorCode } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { homePath } from "@/lib/cabinet";
 import { useT } from "@/lib/i18n";
 
 type Family = {
@@ -66,7 +67,7 @@ function FamilyView() {
   };
 
   if (!family && !error) return <Splash />;
-  const back = me?.role === "student" ? "/" : "/journal";
+  const back = homePath(me?.role);
 
   return (
     <Page className="gap-5">

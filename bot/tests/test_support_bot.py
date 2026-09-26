@@ -7,7 +7,7 @@ from test_bot_flow import KID, MOM, TEACHER
 
 async def _parent(h) -> None:
     await h.send(MOM, "/start", name="Мама")
-    await h.press(MOM, "role:parent", name="Мама")
+    await h.register(MOM, "parent", name="Мама")
     await h.press(MOM, "reg:menu", name="Мама")  # регистрацию можно дозаполнить позже
 
 
@@ -45,7 +45,7 @@ async def test_parent_asks_and_owner_replies(h):
 
 async def test_teacher_has_support_and_screenshot_is_copied(h):
     await h.send(TEACHER, "/start", name="Учитель")
-    await h.press(TEACHER, "role:teacher", name="Учитель")
+    await h.register(TEACHER, "teacher", name="Учитель")
     await h.press(TEACHER, "reg:menu", name="Учитель")
     assert "support:new" in h.callback_data(h.api.last(TEACHER))
 

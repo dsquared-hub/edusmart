@@ -13,6 +13,7 @@ from app.api.deps import current_user, get_session
 from app.core.config import get_settings
 from app.db.models import LessonMaterial, Textbook, User
 from app.services import materials as svc
+from app.services import stories
 from app.services.gemini import SUBJECTS
 from app.services.media import sniff_mime
 from app.services.rag import ingest
@@ -169,6 +170,19 @@ async def delete_material(material_id: int, user: User = Depends(current_user), 
     except svc.MaterialError as exc:
         _raise(exc)
     return {"ok": True}
+
+
+@router.post("/materials/{material_id}/stories")
+async def send_stories(material_id: int, user: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
+    """Stories из материалов — в ленту всем привязанным ученикам учителя."""
+    try:
+        material = await svc.material_for(session, user, material_id)
+        sent = await stories.send_from_material(session, user, material)
+    except svc.MaterialError as exc:
+        _raise(exc)
+    except stories.StoryError as exc:
+        raise HTTPException(exc.status, detail={"code": exc.code})
+    return {"sent": sent}
 
 
 @router.get("/materials/{material_id}/export.docx")

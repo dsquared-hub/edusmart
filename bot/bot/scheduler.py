@@ -26,6 +26,7 @@ from app.repositories.students import (
 from app.repositories.users import get_user
 from app.services.accounts import consent_is_current
 from app.services.evening import enqueue_parent_reminders, reminders_allowed
+from app.services.parent_day import enqueue_parent_day
 from bot.keyboards import evening_keyboard
 
 log = logging.getLogger(__name__)
@@ -150,6 +151,11 @@ async def parent_reminders(bot=None, now=None) -> int:
     return await enqueue_parent_reminders(now)
 
 
+async def parent_day(bot=None, now=None) -> int:
+    """Каждые 5 минут после PARENT_DAY_PUSH (16:30): дневное уведомление родителям — раз в день."""
+    return await enqueue_parent_day(now)
+
+
 def setup_scheduler(bot, timezone: str) -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler(timezone=timezone)
     scheduler.add_job(
@@ -167,4 +173,5 @@ def setup_scheduler(bot, timezone: str) -> AsyncIOScheduler:
     scheduler.add_job(
         parent_reminders, CronTrigger(minute="*/5"), args=[bot], id="parent_reminders"
     )
+    scheduler.add_job(parent_day, CronTrigger(minute="*/5"), args=[bot], id="parent_day")
     return scheduler

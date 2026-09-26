@@ -45,6 +45,7 @@ async def start_explain(
     subject: str | None = Form(None),
     grade: int | None = Form(None, ge=5, le=11),
     photo: UploadFile | None = File(None),
+    assignment_id: int | None = Form(None),
     user: User = Depends(current_user),
     session: AsyncSession = Depends(get_session),
     explain: ExplainService = Depends(get_explain),
@@ -66,6 +67,7 @@ async def start_explain(
             grade=grade,
             source="web",
             lang=user.lang,
+            assignment_id=assignment_id,
         )
     except ExplainError as exc:
         _raise(exc)

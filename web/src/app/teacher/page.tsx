@@ -108,10 +108,12 @@ function PanelView() {
   return (
     <Page className="gap-5 lg:max-w-6xl">
       <header className="flex items-center gap-3">
-        <IconButton href="/journal" label={t("profile.back")}>‹</IconButton>
-        <h1 className="flex-1 text-2xl font-black">📊 {t("panel.title")}</h1>
+        <h1 className="flex-1 text-2xl font-black">👩‍🏫 {t("panel.title")}</h1>
+        <IconButton href="/journal" label={t("journal.title")}>📒</IconButton>
         <IconButton href="/teacher/checks" label={t("checks.title")}>📝</IconButton>
         <IconButton href="/teacher/materials" label={t("materials.title")}>🧑‍🏫</IconButton>
+        <IconButton href="/support" label={t("support.title")}>💬</IconButton>
+        <IconButton href="/profile" label={t("profile.title")}>⚙️</IconButton>
       </header>
       {error && <Notice tone="error">{t(`errors.${error}`)}</Notice>}
       {sent !== null && <Notice>✅ {t("panel.sent", { n: sent })}</Notice>}

@@ -206,7 +206,10 @@ function JournalView() {
           </>
         )}
         {me?.role === "parent" && (
-          <IconButton href="/family" label={t("family.title")}>👨‍👩‍👧</IconButton>
+          <>
+            <IconButton href="/parent" label={t("cabinet.parent_title")}>🏠</IconButton>
+            <IconButton href="/family" label={t("family.title")}>👨‍👩‍👧</IconButton>
+          </>
         )}
         <IconButton href="/support" label={t("support.title")}>💬</IconButton>
         <IconButton href="/profile" label={t("profile.title")}>⚙️</IconButton>

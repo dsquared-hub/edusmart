@@ -24,6 +24,16 @@ def get_explain(request: Request) -> ExplainService:
     return request.app.state.explain
 
 
+def get_work_checker(request: Request):
+    """Vision-проверка фото работ (квесты ученика). Создаётся один раз на приложение."""
+    checker = getattr(request.app.state, "work_checker", None)
+    if checker is None:
+        from app.services.vision import make_work_checker
+
+        checker = request.app.state.work_checker = make_work_checker()
+    return checker
+
+
 async def current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
     session: AsyncSession = Depends(get_session),

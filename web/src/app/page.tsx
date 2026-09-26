@@ -4,12 +4,23 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Mascot } from "@/components/Mascot";
 import { RequireStudent } from "@/components/RequireStudent";
+import { StoriesStrip } from "@/components/StoriesStrip";
+import { StudentGoals } from "@/components/StudentGoals";
 import { IconButton, Notice, Page, Splash } from "@/components/ui";
 import { api, errorCode } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 import { subjectIcon } from "@/lib/subjects";
 import type { Progress, TopicBrief } from "@/lib/types";
+
+/** Тренажёры на главной ученика (ДТМ — с 8 класса, IELTS — с 10-го, как в Dev-Spec). */
+const TOOLS = [
+  { key: "tutor", href: "/tutor", icon: "🦏", minGrade: 0 },
+  { key: "quests", href: "/quests", icon: "📄", minGrade: 0 },
+  { key: "duels", href: "/duels", icon: "⚔️", minGrade: 0 },
+  { key: "dtm", href: "/dtm", icon: "🎓", minGrade: 8 },
+  { key: "ielts", href: "/ielts", icon: "🇬🇧", minGrade: 10 },
+] as const;
 
 function Stat({ icon, value, label }: { icon: string; value: string | number; label: string }) {
   return (
@@ -96,12 +107,19 @@ function Home() {
   return (
     <Page className="gap-5">
       <header className="flex items-center gap-3 anim-rise">
-        <Mascot size={64} />
-        <h1 className="min-w-0 flex-1 text-2xl font-black leading-tight">{t("home.hello", { name: me.name.split(" ")[0] })}</h1>
+        {/* После входа — свой аватар; нажатие ведёт в «Мой носорог» */}
+        <Link href="/avatar" aria-label={t("avatar.home_card")} className="shrink-0 transition-transform active:scale-95">
+          <Mascot size={76} />
+        </Link>
+        <h1 className="min-w-0 flex-1 text-2xl font-black leading-tight">
+          <span className="hl-neon">{t("home.hello", { name: me.name.split(" ")[0] })}</span>
+        </h1>
         <IconButton href="/profile" label={t("profile.title")}>⚙️</IconButton>
       </header>
 
       {error && <Notice tone="error">{t(`errors.${error}`)}</Notice>}
+
+      {consentOk && <StoriesStrip />}
 
       {progress && (
         <section className="card flex flex-col gap-4 anim-rise" aria-label={t("home.level", { level: progress.level })}>
@@ -113,7 +131,7 @@ function Home() {
           </div>
           <div className="h-4 overflow-hidden rounded-full bg-line" aria-hidden="true">
             <div
-              className="h-full rounded-full bg-accent transition-all duration-700"
+              className="neon-bar h-full rounded-full transition-all duration-700"
               style={{ width: `${Math.max(4, progress.level_progress * 100)}%` }}
             />
           </div>
@@ -136,7 +154,25 @@ function Home() {
         <span className="text-sm font-bold opacity-80">{t("home.cta_hint")}</span>
       </Link>
 
+      {consentOk && (
+        <section aria-labelledby="home-tools" className="flex flex-col gap-2">
+          <h2 id="home-tools" className="label">🧰 {t("home.tools")}</h2>
+          {/* Тренажёры — плитками, чтобы главная не превращалась в длинный список */}
+          <div className="grid grid-cols-2 gap-2">
+            {TOOLS.filter((tool) => (me.student?.grade ?? 11) >= tool.minGrade).map((tool) => (
+              <Link key={tool.href} href={tool.href} className="card flex flex-col gap-1 !p-4 anim-rise">
+                <span className="text-3xl" aria-hidden="true">{tool.icon}</span>
+                <span className="font-black leading-tight">{t(`${tool.key}.home_card`)}</span>
+                <span className="text-xs font-bold leading-snug text-muted">{t(`${tool.key}.home_hint`)}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {consentOk && <EveningCard />}
+
+      {consentOk && <StudentGoals />}
 
       <Link href="/avatar" className="option anim-rise">
         <span className="text-3xl" aria-hidden="true">🦏</span>

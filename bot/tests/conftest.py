@@ -34,6 +34,7 @@ from aiogram.fsm.storage.memory import MemoryStorage  # noqa: E402
 from aiogram.types import (  # noqa: E402
     CallbackQuery,
     Chat,
+    Contact,
     File,
     Message,
     PhotoSize,
@@ -140,6 +141,25 @@ class Harness:
             message=message,
         )
         await self._feed(Update(update_id=next(_ids), callback_query=query))
+
+    async def contact(self, uid: int, phone: str, *, owner: int | None = None, name: str = "Аня") -> None:
+        """Кнопка «📱 Отправить номер» (owner — чей это контакт)."""
+        message = Message(
+            message_id=next(_ids),
+            date=datetime.now(),
+            chat=Chat(id=uid, type="private"),
+            from_user=self._tg_user(uid, name),
+            contact=Contact(phone_number=phone, first_name=name, user_id=owner or uid),
+        )
+        await self._feed(Update(update_id=next(_ids), message=message))
+
+    async def register(self, uid: int, role: str, name: str = "Аня") -> None:
+        """Регистрация взрослого: «Я родитель» / «Я учитель» → номер. Родителя бот сразу
+        спрашивает об имени ребёнка — выходим в меню."""
+        await self.press(uid, f"role:{role}", name=name)
+        await self.contact(uid, f"+998{900000000 + uid}", name=name)
+        if role == "parent":
+            await self.send(uid, "/menu", name=name)
 
     async def _feed(self, update: Update) -> None:
         update = Update.model_validate(update.model_dump(), context={"bot": self.bot})

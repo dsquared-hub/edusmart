@@ -23,7 +23,7 @@ async def _student_with_consent(h) -> int:
         kid = await get_by_telegram(s, KID)
         code = (await get_student(s, kid.id)).family_code
     await h.send(MOM, "/start", name="Мама")
-    await h.press(MOM, "role:parent", name="Мама")
+    await h.register(MOM, "parent", name="Мама")
     await h.press(MOM, "parent:bind", name="Мама")
     await h.send(MOM, code, name="Мама")
     await h.press(MOM, "consent:confirm", name="Мама")
@@ -115,7 +115,7 @@ async def test_teacher_notified_when_topic_completed(h):
     async with SessionLocal() as s:
         code = (await get_student(s, kid_id)).family_code
     await h.send(TEACHER, "/start", name="Учитель")
-    await h.press(TEACHER, "role:teacher", name="Учитель")
+    await h.register(TEACHER, "teacher", name="Учитель")
     await h.press(TEACHER, "teacher:bind", name="Учитель")
     await h.send(TEACHER, code, name="Учитель")
 
@@ -219,8 +219,6 @@ async def test_parent_creates_login_without_telegram(h):
     await _student_with_consent(h)
     await h.press(MOM, "access:new", name="Мама")  # кнопка из старых сообщений ведёт в регистрацию
     await h.send(MOM, "Тимур", name="Мама")
-    await h.press(MOM, "reg:grade:5", name="Мама")
-    await h.press(MOM, "reg:consent", name="Мама")
     text = h.api.last(MOM).text
     assert "Логин" in text and "Код" in text
     login = text.split("Логин: <code>")[1].split("</code>")[0]
@@ -240,10 +238,9 @@ async def test_parent_creates_login_without_telegram(h):
 async def test_teacher_class_and_student_access(h):
     await _student_with_consent(h)
     await h.send(TEACHER, "/start", name="Учитель")
-    await h.press(TEACHER, "role:teacher", name="Учитель")
+    await h.register(TEACHER, "teacher", name="Учитель")
     await h.press(TEACHER, "access:new", name="Учитель")
     await h.send(TEACHER, "Лола Каримова", name="Учитель")
-    await h.press(TEACHER, "reg:grade:0", name="Учитель")
     assert "согласие родителя" in h.api.last(TEACHER).text
     await h.send(TEACHER, "/class", name="Учитель")
     assert "Лола Каримова" in h.api.last(TEACHER).text

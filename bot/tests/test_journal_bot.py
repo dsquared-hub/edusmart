@@ -23,7 +23,7 @@ async def _bind_teacher(h, kid_id: int) -> None:
     async with SessionLocal() as s:
         code = (await get_student(s, kid_id)).family_code
     await h.send(TEACHER, "/start", name="Учитель")
-    await h.press(TEACHER, "role:teacher", name="Учитель")
+    await h.register(TEACHER, "teacher", name="Учитель")
     await h.press(TEACHER, "teacher:bind", name="Учитель")
     await h.send(TEACHER, code, name="Учитель")
 
@@ -72,7 +72,7 @@ async def test_journal_not_for_students_or_foreign(h):
     assert "родителям и учителям" in h.api.last(KID).text
 
     await h.send(TEACHER, "/start", name="Учитель")
-    await h.press(TEACHER, "role:teacher", name="Учитель")
+    await h.register(TEACHER, "teacher", name="Учитель")
     await h.send(TEACHER, "/journal", name="Учитель")
     assert "пока нет учеников" in h.api.last(TEACHER).text
     await h.press(TEACHER, f"journal:{kid_id}", name="Учитель")  # чужой ученик

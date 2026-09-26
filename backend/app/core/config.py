@@ -80,6 +80,9 @@ class Settings(BaseSettings):
     evening_time_latest: str = "20:00"  # самое позднее время напоминания, которое можно выбрать
     parent_reminder_delay: int = 60
     parent_reminder_latest: str = "20:30"
+    # Дневное уведомление родителю (Dev-Spec): «вечерний тест в 17:00» + тревога о пропусках.
+    # Пусто — выключено.
+    parent_day_push: str = "16:30"
     reminder_quiet_after: str = "21:00"  # после — никаких уведомлений (дети готовятся ко сну)
     evening_review_days: str = "3,7,14"  # интервальное повторение: темы N дней назад
     freezes_per_week: int = 2  # бесплатные «заморозки» серии
@@ -89,19 +92,7 @@ class Settings(BaseSettings):
     ers_min_attempts: int = 20  # меньше ответов по предмету — «Недостаточно данных»
     ers_mastery_threshold: float = 0.8  # тема освоена — 80%+ по последним попыткам
 
-    # Модуль 4: вход по SMS и семейный аккаунт
-    sms_provider: str = "log"  # log — код в лог (разработка) | eskiz — Eskiz.uz | smsgate — свой Android
-    eskiz_email: str = ""
-    eskiz_password: str = ""
-    eskiz_from: str = "4546"
-    # SMS Gateway for Android (sms-gate.app): SMS уходят с SIM-карты телефона
-    sms_gate_url: str = "https://api.sms-gate.app/3rdparty/v1/messages"
-    sms_gate_user: str = ""
-    sms_gate_password: str = ""
-    sms_code_ttl: int = 300  # 5 минут
-    sms_max_attempts: int = 5
-    sms_resend_seconds: int = 60
-    sms_hourly_limit: int = 5
+    # Модуль 4: семейный аккаунт
     family_max_adults: int = 4
     family_max_children: int = 6
     family_invite_hours: int = 24

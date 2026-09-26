@@ -13,7 +13,7 @@ from sqlalchemy import text
 
 from app.api.ratelimit import RateLimitMiddleware
 from app.api.routers import (
-    account, auth, avatar, explain, family, journal, me, push, support, teacher_checks, teacher_materials,
+    account, auth, avatar, cabinet, dtm, duels, explain, family, ielts, journal, me, push, quests, stories, support, teacher_checks, teacher_materials, tutor,
 )
 from app.services import web_push
 from app.core.config import Settings, get_settings
@@ -80,6 +80,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(me.router)
     app.include_router(explain.router)
     app.include_router(journal.router)
+    app.include_router(cabinet.router)
+    app.include_router(stories.router)
+    app.include_router(tutor.router)
+    app.include_router(quests.router)
+    app.include_router(dtm.router)
+    app.include_router(ielts.router)
+    app.include_router(duels.router)
     app.include_router(support.router)
     app.include_router(teacher_checks.router)
     app.include_router(teacher_materials.router)

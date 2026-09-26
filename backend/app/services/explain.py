@@ -18,11 +18,12 @@ import logging
 from dataclasses import dataclass
 from typing import Awaitable, Callable
 
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
 from app.core.timeutil import local_today, utcnow
-from app.db.models import Student, Topic
+from app.db.models import Assignment, Student, Topic
 from app.repositories import events as events_repo
 from app.repositories import reports as reports_repo
 from app.repositories import topics as topics_repo
@@ -217,6 +218,7 @@ class ExplainService:
         grade: int | None = None,
         source: str = "web",
         lang: str = "ru",
+        assignment_id: int | None = None,
     ) -> Topic:
         """Резервирует попытку, запрашивает и проверяет объяснение, создаёт тему.
 
@@ -260,7 +262,11 @@ class ExplainService:
             source=source,
         )
         # Привязка к теме школьной программы — для вечернего теста и ERS (без запроса к ИИ)
-        topic.curriculum_topic_id = await match_topic(session, title, subject, grade or student.grade)
+        assignment = await session.get(Assignment, assignment_id) if assignment_id else None
+        if assignment is not None and assignment.student_id == user_id:
+            topic.curriculum_topic_id = assignment.topic_id  # тема задания известна точно
+        else:
+            topic.curriculum_topic_id = await match_topic(session, title, subject, grade or student.grade)
         await session.commit()
         return topic
 
@@ -315,6 +321,17 @@ class ExplainService:
         if completed:
             topic.status = "completed"
             topic.completed_at = utcnow()
+            if topic.curriculum_topic_id is not None:
+                # Задание от родителя / учителя по этой теме программы — выполнено
+                await session.execute(
+                    update(Assignment)
+                    .where(
+                        Assignment.student_id == user_id,
+                        Assignment.topic_id == topic.curriculum_topic_id,
+                        Assignment.done_at.is_(None),
+                    )
+                    .values(done_at=utcnow())
+                )
             await events_repo.enqueue(
                 session,
                 EVENT_TOPIC_COMPLETED,

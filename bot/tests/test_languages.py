@@ -8,8 +8,8 @@ from test_bot_flow import CORRECT, KID, MOM, _student_with_consent, _topic
 
 
 async def test_new_user_language_from_telegram(h):
-    await h.send(5001, "/start", lang="en")
-    assert "Who are you?" in h.api.last(5001).text
+    await h.send(5001, "/start", lang="en")  # английский Telegram — всё равно русский
+    assert "Кто вы?" in h.api.last(5001).text
     await h.send(5002, "/start", lang="uz")
     assert "Siz kimsiz?" in h.api.last(5002).text
     await h.send(5003, "/start", lang="de")  # нет такого — русский

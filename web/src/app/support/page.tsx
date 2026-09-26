@@ -6,6 +6,7 @@ import { Mascot } from "@/components/Mascot";
 import { Dots, IconButton, Notice, Page, Splash } from "@/components/ui";
 import { api, errorCode } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { homePath } from "@/lib/cabinet";
 import { useT } from "@/lib/i18n";
 import type { SupportTicket } from "@/lib/types";
 
@@ -45,6 +46,7 @@ function TicketCard({ ticket }: { ticket: SupportTicket }) {
 
 function SupportView() {
   const t = useT();
+  const { me } = useAuth();
   const [tickets, setTickets] = useState<SupportTicket[] | null>(null);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -88,7 +90,7 @@ function SupportView() {
   return (
     <Page className="gap-5">
       <header className="flex items-center gap-3">
-        <IconButton href="/journal" label={t("profile.back")}>‹</IconButton>
+        <IconButton href={homePath(me?.role)} label={t("profile.back")}>‹</IconButton>
         <h1 className="flex-1 text-2xl font-black">💬 {t("support.title")}</h1>
       </header>
 

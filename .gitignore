@@ -24,3 +24,6 @@ web/tsconfig.tsbuildinfo
 prototype/dist/
 # фото рукописных работ учеников — персональные данные, не в git
 backend/media/
+
+# Исходник 3D-модели (42 МБ); на сайт идёт облегчённая web/public/models/rhino.glb
+/*.glb

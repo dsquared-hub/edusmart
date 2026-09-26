@@ -3,7 +3,7 @@
 У ребёнка может быть несколько взрослых (мама, папа, опекун), у взрослого — несколько
 детей: все взрослые семьи видят всех её детей. Лимиты: до 4 взрослых и 6 детей.
 Привязка — код из 6 цифр или QR (24 часа, один раз); взрослый, который вступает в
-семью, должен подтвердить номер телефона по SMS. Доступ к данным детей остаётся на
+семью, должен поделиться номером телефона в боте. Доступ к данным детей остаётся на
 связях parent_links (их используют журнал, отчёты, бот) — семья их поддерживает.
 """
 from __future__ import annotations
@@ -85,7 +85,7 @@ async def join(session: AsyncSession, user: User, code: str, settings: Settings 
     settings = settings or get_settings()
     role = member_role_for(user)
     if role in ADULT_ROLES and not user.phone:
-        raise FamilyError("phone_required", 403)  # взрослый подтверждает свой номер по SMS
+        raise FamilyError("phone_required", 403)  # номер — кнопкой «Поделиться номером» в боте
     invite = await session.scalar(select(FamilyInvite).where(FamilyInvite.code == (code or "").strip()))
     if invite is None or invite.used_at is not None or invite.expires_at < utcnow():
         raise FamilyError("invite_invalid", 404)

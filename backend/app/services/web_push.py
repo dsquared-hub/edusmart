@@ -224,7 +224,40 @@ async def _evening_missed(session, sender, p: dict) -> None:
         ))
 
 
+async def _parent_day(session, sender, p: dict) -> None:
+    student = await session.get(User, p["student_user_id"])
+    missed = int(p.get("missed_days", 0))
+    kind = "alert" if missed >= 2 else "missed" if missed == 1 else "day"
+    for parent in await get_parents_of(session, p["student_user_id"]):
+        lang = _lang(parent)
+        await send_to(session, sender, parent, Push(
+            t(f"push_parent_{kind}_title", lang, name=_child(student, lang), n=missed),
+            t(f"push_parent_{kind}_body", lang, start=get_settings().evening_start, week=p.get("week", "")),
+            "/parent", tag=f"parent-day-{p['student_user_id']}",
+        ))
+
+
+async def _duel_finished(session, sender, p: dict) -> None:
+    from app.db.models import Duel
+
+    duel = await session.get(Duel, p["duel_id"])
+    if duel is None:
+        return
+    for player in (duel.creator_id, duel.opponent_id):
+        user = await session.get(User, player) if player else None
+        if user is None:
+            continue
+        lang = _lang(user)
+        outcome = "draw" if duel.winner_id is None else "win" if duel.winner_id == player else "lose"
+        await send_to(session, sender, user, Push(
+            t(f"push_duel_{outcome}_title", lang), t("push_duel_body", lang, topic=duel.topic[:60]), f"/duels/{duel.id}",
+            tag=f"duel-{duel.id}",
+        ))
+
+
 HANDLERS = {
+    "duel_finished": _duel_finished,
+    "parent_day": _parent_day,
     "topic_completed": _topic_completed,
     "evening_done": _evening_done,
     "evening_missed": _evening_missed,
@@ -294,9 +327,11 @@ async def run_worker(sender: PushSender | None, idle_seconds: float = 3.0) -> No
             await process_once(sender)
             if ticks % 100 == 0:  # ~раз в 5 минут
                 from app.services.evening import enqueue_parent_reminders
+                from app.services.parent_day import enqueue_parent_day
 
                 await evening_reminders(sender)
                 await enqueue_parent_reminders()
+                await enqueue_parent_day()
         except asyncio.CancelledError:
             raise
         except Exception:

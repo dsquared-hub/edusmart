@@ -36,6 +36,16 @@ function LearnForm() {
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [assignment, setAssignment] = useState<string | null>(null);
+
+  // Задание от родителя / учителя: тема уже известна (/learn?title=…&assignment=…)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const preset = params.get("title");
+    if (preset) setTitle(preset.slice(0, 500));
+    const id = params.get("assignment");
+    if (id && /^\d+$/.test(id)) setAssignment(id);
+  }, []);
 
   // Превью живёт только в памяти вкладки
   useEffect(() => {
@@ -61,6 +71,7 @@ function LearnForm() {
       form.set("subject", subject);
       form.set("grade", String(grade));
       if (photo) form.set("photo", await shrinkImage(photo), "task.jpg");
+      if (assignment) form.set("assignment_id", assignment);
       const topic = await api<Topic>("/explain", { method: "POST", form });
       router.push(`/learn/${topic.id}`);
     } catch (err) {
@@ -88,7 +99,7 @@ function LearnForm() {
           placeholder={t("learn.placeholder")}
           aria-label={t("learn.title")}
           rows={3}
-          autoFocus
+          autoFocus={!assignment}
         />
 
         <div className="flex flex-col gap-2">

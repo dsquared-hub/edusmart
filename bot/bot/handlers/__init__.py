@@ -15,13 +15,11 @@ from bot.handlers.start import router as start_router
 from bot.handlers.student import router as student_router
 from bot.handlers.support import router as support_router
 from bot.handlers.teacher import router as teacher_router
-from bot.handlers.web_login import router as web_login_router
 
 main_router = Router()
 # Команды владельца — до ученика: иначе «/block …» в режиме «жду тему»
 # ушло бы в Gemini как тема.
 for _router in (
-    web_login_router,  # /start login_… — раньше обычного /start
     start_router,
     registration_router,
     language_router,

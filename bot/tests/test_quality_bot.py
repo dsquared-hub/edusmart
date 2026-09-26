@@ -27,7 +27,7 @@ async def test_step_has_report_button_and_report_reaches_owner_and_teacher(h):
     async with SessionLocal() as s:
         code = (await get_student(s, kid_id)).family_code
     await h.send(TEACHER, "/start", name="Учитель")
-    await h.press(TEACHER, "role:teacher", name="Учитель")
+    await h.register(TEACHER, "teacher", name="Учитель")
     await h.press(TEACHER, "teacher:bind", name="Учитель")
     await h.send(TEACHER, code, name="Учитель")
 

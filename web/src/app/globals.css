@@ -4,25 +4,29 @@
 
 /* ---------- Темы (RGB-тройки для Tailwind: rgb(var(--x) / alpha)) ---------- */
 
+/* «Капучино» (id sun — как хранится в профилях): бежевый и кофейный + неоновые акценты.
+   --accent — неоновая бирюза (фокус, прогресс, свечение), --neon — неоновый розовый (декор). */
 :root,
 [data-theme="sun"] {
-  --bg: 255 248 236;
-  --surface: 255 255 255;
-  --soft: 255 238 210;
-  --ink: 43 38 58;
-  --muted: 112 104 128;
-  --line: 240 224 196;
-  --primary: 255 150 50;
-  --on-primary: 58 28 0;
-  --accent: 255 205 60;
-  --good: 34 170 104;
-  --bad: 232 84 76;
+  --bg: 245 236 222;
+  --surface: 255 251 245;
+  --soft: 237 224 204;
+  --ink: 58 36 24;
+  --muted: 125 98 78;
+  --line: 225 207 182;
+  --primary: 111 66 38;
+  --on-primary: 255 245 232;
+  --accent: 0 214 196;
+  --neon: 255 77 141;
+  --good: 22 163 94;
+  --bad: 225 72 60;
   --border-w: 2px;
   --font-body: "Nunito", ui-rounded, "Segoe UI", system-ui, sans-serif;
   color-scheme: light;
 }
 
 [data-theme="ocean"] {
+  --neon: 0 229 255;
   --bg: 236 245 255;
   --surface: 255 255 255;
   --soft: 216 233 255;
@@ -35,6 +39,7 @@
 }
 
 [data-theme="forest"] {
+  --neon: 170 255 60;
   --bg: 238 248 238;
   --surface: 255 255 255;
   --soft: 214 240 216;
@@ -47,6 +52,7 @@
 }
 
 [data-theme="berry"] {
+  --neon: 255 77 196;
   --bg: 252 240 250;
   --surface: 255 255 255;
   --soft: 246 220 244;
@@ -69,6 +75,7 @@
   --primary: 255 228 0;
   --on-primary: 0 0 0;
   --accent: 0 230 255;
+  --neon: 0 230 255;
   --good: 0 255 110;
   --bad: 255 110 110;
   --border-w: 3px;
@@ -98,12 +105,22 @@ html {
 }
 
 body {
-  background: rgb(var(--bg));
+  /* Мягкое неоновое свечение по углам поверх фона темы */
+  background:
+    radial-gradient(40rem 26rem at -10% -8%, rgb(var(--neon) / 0.2), transparent 70%),
+    radial-gradient(36rem 26rem at 112% 18%, rgb(var(--accent) / 0.24), transparent 70%),
+    radial-gradient(40rem 24rem at 50% 118%, rgb(var(--primary) / 0.10), transparent 70%),
+    rgb(var(--bg));
+  background-attachment: fixed;
   color: rgb(var(--ink));
   font-family: var(--font-body);
   font-size: 1.0625rem;
   line-height: 1.55;
   min-height: 100dvh;
+}
+
+[data-contrast="high"] body {
+  background: rgb(var(--bg));
 }
 
 :focus-visible {
@@ -114,31 +131,60 @@ body {
 /* ---------- Компоненты ---------- */
 
 @layer components {
+  /* Карточка: полупрозрачная «стеклянная» поверхность, мягкая тень, неоновая кромка сверху */
   .card {
-    @apply rounded-3xl bg-surface p-5;
+    @apply relative rounded-3xl bg-surface/85 p-5;
     border: var(--border-w) solid rgb(var(--line));
-    box-shadow: 0 6px 0 rgb(var(--line));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.6),
+      0 14px 30px -20px rgb(var(--ink) / 0.45);
+    backdrop-filter: blur(10px);
+  }
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: -1px 18% auto;
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, rgb(var(--accent)), rgb(var(--neon)), transparent);
+    opacity: 0.8;
+    pointer-events: none;
   }
 
   /* Объёмная кнопка: тень снизу, при нажатии «проваливается» */
   .btn {
-    @apply inline-flex min-h-[3.5rem] w-full select-none items-center justify-center gap-2 rounded-2xl px-6 text-lg font-extrabold transition-transform duration-75;
-    box-shadow: 0 5px 0 rgb(var(--ink) / 0.22);
+    @apply inline-flex min-h-[3.5rem] w-full select-none items-center justify-center gap-2 rounded-2xl px-6 text-lg font-extrabold transition-[transform,box-shadow] duration-100;
+    box-shadow: 0 4px 0 rgb(var(--ink) / 0.25);
   }
   .btn:active:not(:disabled) {
-    transform: translateY(4px);
-    box-shadow: 0 1px 0 rgb(var(--ink) / 0.22);
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 rgb(var(--ink) / 0.25);
   }
   .btn:disabled {
     @apply cursor-not-allowed opacity-50;
   }
+  /* Главная кнопка: кофейный градиент с неоновым свечением */
   .btn-primary {
-    @apply bg-primary text-on-primary;
+    @apply text-on-primary;
+    background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary) / 0.86) 100%);
+    box-shadow:
+      0 4px 0 rgb(var(--ink) / 0.35),
+      0 12px 26px -12px rgb(var(--accent) / 0.95),
+      inset 0 0 0 1.5px rgb(var(--accent) / 0.35);
+  }
+  .btn-primary:hover:not(:disabled) {
+    box-shadow:
+      0 4px 0 rgb(var(--ink) / 0.35),
+      0 14px 30px -10px rgb(var(--accent)),
+      inset 0 0 0 2px rgb(var(--accent) / 0.7);
   }
   .btn-soft {
-    @apply bg-surface text-ink;
+    @apply bg-surface/90 text-ink;
     border: var(--border-w) solid rgb(var(--line));
-    box-shadow: 0 5px 0 rgb(var(--line));
+    box-shadow: 0 4px 0 rgb(var(--line));
+  }
+  .btn-soft:hover:not(:disabled) {
+    border-color: rgb(var(--accent) / 0.7);
   }
   .btn-good {
     @apply bg-good text-white;
@@ -157,12 +203,17 @@ body {
   .chip[aria-pressed="true"] {
     @apply bg-primary text-on-primary;
     border-color: rgb(var(--primary));
+    box-shadow: 0 0 0 3px rgb(var(--accent) / 0.3), 0 6px 16px -8px rgb(var(--accent));
   }
 
   .option {
-    @apply flex min-h-[3.75rem] w-full items-center gap-3 rounded-2xl bg-surface px-4 py-3 text-left text-lg font-bold text-ink transition-transform duration-75;
+    @apply flex min-h-[3.75rem] w-full items-center gap-3 rounded-2xl bg-surface/90 px-4 py-3 text-left text-lg font-bold text-ink transition-[transform,border-color,box-shadow] duration-100;
     border: var(--border-w) solid rgb(var(--line));
     box-shadow: 0 4px 0 rgb(var(--line));
+  }
+  .option:hover:not(:disabled) {
+    border-color: rgb(var(--accent) / 0.75);
+    box-shadow: 0 4px 0 rgb(var(--line)), 0 0 0 3px rgb(var(--accent) / 0.14);
   }
   .option:active:not(:disabled) {
     transform: translateY(3px);
@@ -188,7 +239,24 @@ body {
   }
   .field:focus {
     outline: none;
-    border-color: rgb(var(--primary));
+    border-color: rgb(var(--accent));
+    box-shadow: 0 0 0 4px rgb(var(--accent) / 0.2);
+  }
+
+  /* Неоновый «маркер» под заголовком (эмодзи в тексте не портит) */
+  .hl-neon {
+    background: linear-gradient(90deg, rgb(var(--accent) / 0.55), rgb(var(--neon) / 0.45)) no-repeat 0 88% / 100% 0.32em;
+    border-radius: 0.2em;
+    padding: 0 0.1em;
+  }
+  /* Полоса прогресса со свечением */
+  .neon-bar {
+    background: linear-gradient(90deg, rgb(var(--accent)), rgb(var(--neon)));
+    box-shadow: 0 0 12px rgb(var(--accent) / 0.65);
+  }
+  [data-contrast="high"] .hl-neon {
+    background: none;
+    text-decoration: underline 0.12em rgb(var(--accent));
   }
 
   .label {
@@ -225,6 +293,31 @@ body {
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
   40% { transform: scale(1); opacity: 1; }
 }
+
+/* Носороги «живые»: картинка-маскот дышит; у аватара — дыхание, моргание, уши */
+@keyframes breathe {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(-1.5%) scale(1.015, 0.99); }
+}
+@keyframes blink {
+  0%, 93%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(0.12); }
+}
+@keyframes ear-l {
+  0%, 80%, 100% { transform: rotate(0); }
+  85% { transform: rotate(-10deg); }
+  90% { transform: rotate(4deg); }
+}
+@keyframes ear-r {
+  0%, 60%, 100% { transform: rotate(0); }
+  65% { transform: rotate(10deg); }
+  70% { transform: rotate(-4deg); }
+}
+.mascot img { animation: breathe 3.6s ease-in-out infinite; transform-origin: 50% 100%; }
+.av-breathe { animation: breathe 3.4s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+.av-eyes { animation: blink 4.8s infinite; transform-box: fill-box; transform-origin: center; }
+.av-ear-l { animation: ear-l 6s ease-in-out infinite; transform-box: fill-box; transform-origin: 70% 100%; }
+.av-ear-r { animation: ear-r 6s ease-in-out infinite; transform-box: fill-box; transform-origin: 30% 100%; }
 
 .anim-pop { animation: pop 0.35s ease-out; }
 .anim-shake { animation: shake 0.4s ease-in-out; }

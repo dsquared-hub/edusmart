@@ -291,6 +291,22 @@ async def regenerate_code(
     return IssuedAccess(student, user, user.login, code)
 
 
+async def issue_own_access(session: AsyncSession, adult: User) -> tuple[str, str]:
+    """Логин и код для входа взрослого на сайт — выдаёт бот после регистрации
+    и по кнопке «Вход на сайт». Логин постоянный, код каждый раз новый (старый
+    перестаёт работать); уже открытые сессии не сбрасываются — для этого «Выйти везде»."""
+    if adult.role not in ("parent", "teacher"):
+        raise AccountError("forbidden", 403)
+    if adult.login is None:
+        adult.login = await _unique_login(session, adult.display_name)
+    code = generate_access_code()
+    adult.access_code_hash = hash_code(code)
+    adult.failed_logins = 0
+    adult.locked_until = None
+    await session.commit()
+    return adult.login, code
+
+
 async def logout_everywhere(session: AsyncSession, user: User) -> None:
     """Отзывает все выданные токены сайта этого пользователя."""
     user.token_version = (user.token_version or 0) + 1

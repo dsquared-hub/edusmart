@@ -17,6 +17,7 @@ const config: Config = {
         primary: token("primary"),
         "on-primary": token("on-primary"),
         accent: token("accent"),
+        neon: token("neon"),
         good: token("good"),
         bad: token("bad"),
       },

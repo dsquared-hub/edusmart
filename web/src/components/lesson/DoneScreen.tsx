@@ -57,6 +57,7 @@ export function DoneScreen({
         <button className="btn btn-primary btn-xl" onClick={onPractice} autoFocus>
           💪 {t("done.practice")}
         </button>
+        <Link href={`/quests?topic=${topic.id}`} className="btn btn-soft">📄 {t("quests.from_topic")}</Link>
         <Link href="/learn" className="btn btn-soft">🤔 {t("done.new_topic")}</Link>
         <Link href="/" className="btn btn-soft">🏠 {t("done.home")}</Link>
       </div>

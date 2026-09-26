@@ -1,7 +1,9 @@
-"""Регистрация в боте: взрослый (родитель / учитель) и ребёнок, которого он регистрирует.
+"""Регистрация в боте: отдельно родитель и учитель, дальше — ребёнок / ученик.
 
-Взрослый: роль → имя → номер телефона (кнопкой Telegram, можно пропустить).
-Ребёнок:  имя → класс → согласие родителя (для родителя) → логин и код в приложение EDU.
+Взрослый: /start → «Я родитель» / «Я учитель» (или ссылка ?start=parent / ?start=teacher)
+          → «📱 Отправить номер» → зарегистрирован, получает свой вход на сайт.
+Родитель: сразу — имя ребёнка → профиль и логин с кодом для приложения EDU.
+Учитель:  меню учителя (добавить учеников, класс, журнал).
 """
 from __future__ import annotations
 
@@ -13,22 +15,18 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 
 from app.core.config import get_settings
-from app.core.i18n import SUPPORTED_LANGS, t
+from app.core.i18n import t
 from app.db.models import User
 from app.db.session import SessionLocal
 from app.repositories.users import get_user
-from app.services.accounts import AccountError, choose_role
-from app.services.registration import ADULT_ROLES, GRADES, attach_phone, clean_name, register_child, set_name
+from app.services.accounts import AccountError, choose_role, issue_own_access
+from app.services.registration import ADULT_ROLES, clean_name, register_adult, register_child
 from bot.handlers.common import send_home
 from bot.keyboards import (
-    after_registration_keyboard,
     app_url,
-    cancel_keyboard,
-    child_consent_keyboard,
     child_done_keyboard,
-    grade_keyboard,
-    keep_name_keyboard,
-    share_phone_keyboard,
+    child_name_keyboard,
+    register_phone_keyboard,
 )
 
 router = Router()
@@ -37,14 +35,19 @@ NOT_COMMAND = F.text & ~F.text.startswith("/")  # команды (/start, /class
 
 
 class RegStates(StatesGroup):
-    name = State()
     phone = State()
     child_name = State()
-    child_grade = State()
-    child_consent = State()
 
 
 # ---------- Взрослый ----------
+
+async def ask_phone(message: Message, state: FSMContext, role: str) -> None:
+    """Шаг регистрации родителя или учителя: роль запоминаем, записываем её вместе с номером."""
+    await state.clear()
+    await state.set_state(RegStates.phone)
+    await state.update_data(role=role)
+    await message.answer(t(f"reg_ask_phone_{role}"), reply_markup=register_phone_keyboard())
+
 
 @router.callback_query(F.data.startswith("role:"))
 async def on_role(callback: CallbackQuery, state: FSMContext, user: User) -> None:
@@ -55,80 +58,69 @@ async def on_role(callback: CallbackQuery, state: FSMContext, user: User) -> Non
     if role not in (*ADULT_ROLES, "student"):
         await callback.answer()
         return
-    async with SessionLocal() as session:
-        db_user = await get_user(session, user.id)
-        await choose_role(session, db_user, role)
     await callback.answer()
-    await state.clear()
-    if role == "student":  # старый режим BOT_STUDENT_LESSONS=1
+    if user.role in ADULT_ROLES:  # уже зарегистрирован — кнопка из старого сообщения
+        await state.clear()
+        await send_home(callback.message, user)
+        return
+    if role == "student":  # режим BOT_STUDENT_LESSONS=1
+        async with SessionLocal() as session:
+            db_user = await get_user(session, user.id)
+            await choose_role(session, db_user, role)
+        await state.clear()
         await send_home(callback.message, db_user)
         return
-    await state.set_state(RegStates.name)
-    await callback.message.answer(t("reg_ask_name"), reply_markup=keep_name_keyboard(callback.from_user.full_name))
+    await ask_phone(callback.message, state, role)
 
 
-async def _save_name(message: Message, state: FSMContext, user: User, name: str) -> None:
-    async with SessionLocal() as session:
-        try:
-            await set_name(session, user, name)
-        except AccountError as exc:
-            await message.answer(t(exc.code))
-            return
-    await state.set_state(RegStates.phone)
-    await message.answer(t("reg_ask_phone"), reply_markup=share_phone_keyboard())
+async def _ask_child_name(message: Message, state: FSMContext, role: str) -> None:
+    await state.set_state(RegStates.child_name)
+    if role == "parent":
+        text = t("reg_child_ask_name", version=get_settings().policy_version)
+    else:
+        text = t("reg_student_ask_name")
+    await message.answer(text, reply_markup=child_name_keyboard(with_policy=role == "parent"))
 
 
-@router.callback_query(RegStates.name, F.data == "reg:keepname")
-async def on_keep_name(callback: CallbackQuery, state: FSMContext, user: User) -> None:
-    await callback.answer()
-    await _save_name(callback.message, state, user, callback.from_user.full_name)
-
-
-@router.message(RegStates.name, NOT_COMMAND)
-async def on_name(message: Message, state: FSMContext, user: User) -> None:
-    await _save_name(message, state, user, message.text)
-
-
-def _is_skip(text: str | None) -> bool:
-    return bool(text) and text.strip() in {t("btn_reg_skip", lang) for lang in SUPPORTED_LANGS}
-
-
-async def _finish_adult(message: Message, state: FSMContext, user: User) -> None:
-    await state.clear()
-    async with SessionLocal() as session:
-        db_user = await get_user(session, user.id)
-    key = "reg_done_parent" if db_user.role == "parent" else "reg_done_teacher"
-    # Сначала убираем кнопку «Поделиться номером», потом — меню с действиями
-    await message.answer(t(key, name=escape(db_user.display_name)), reply_markup=ReplyKeyboardRemove())
-    next_key = "reg_next_parent" if db_user.role == "parent" else "reg_next_teacher"
-    await message.answer(t(next_key), reply_markup=after_registration_keyboard(db_user.role))
-
-
-@router.message(RegStates.phone, F.contact)
+@router.message(F.contact)
 async def on_contact(message: Message, state: FSMContext, user: User) -> None:
     if message.contact.user_id != message.from_user.id:
-        await message.answer(t("reg_phone_not_own"), reply_markup=share_phone_keyboard())
+        await message.answer(t("reg_phone_not_own"), reply_markup=register_phone_keyboard())
+        return
+    in_registration = await state.get_state() == RegStates.phone.state
+    role = (await state.get_data()).get("role") if in_registration else None
+    registering = user.role not in ADULT_ROLES
+    if registering and role not in ADULT_ROLES:  # номер без выбранной роли — сначала «Кто вы?»
+        await state.clear()
+        await message.answer(t("reg_phone_then_role"), reply_markup=ReplyKeyboardRemove())
+        await send_home(message, user)
         return
     async with SessionLocal() as session:
         try:
-            await attach_phone(session, user, message.contact.phone_number)
+            adult = await register_adult(session, user, message.contact.phone_number, role or user.role)
         except AccountError as exc:
-            await message.answer(t(exc.code), reply_markup=share_phone_keyboard())
+            await message.answer(t(exc.code), reply_markup=register_phone_keyboard())
             return
-    if (await state.get_data()).get("from_site"):  # пришёл с сайта за кодом — регистрация уже была
-        await state.clear()
-        await message.answer(t("phonelink_ready"), reply_markup=ReplyKeyboardRemove())
+        if registering:
+            login, code = await issue_own_access(session, adult)
+    await state.clear()
+    if not registering:  # уже зарегистрированный взрослый просто сменил номер
+        await message.answer(t("reg_phone_saved"), reply_markup=ReplyKeyboardRemove())
+        await send_home(message, adult)
         return
-    await _finish_adult(message, state, user)
+    # Убираем кнопку «Отправить номер» и даём свой вход на сайт (не путать со входом ребёнка)
+    await message.answer(t(f"reg_done_{adult.role}", name=escape(adult.display_name)), reply_markup=ReplyKeyboardRemove())
+    await message.answer(t(f"site_access_{adult.role}", site=app_url(), login=login, code=code))
+    if adult.role == "parent":
+        await _ask_child_name(message, state, adult.role)  # родитель — сразу регистрирует ребёнка
+    else:
+        await send_home(message, adult)
 
 
 @router.message(RegStates.phone, NOT_COMMAND)
-async def on_phone_text(message: Message, state: FSMContext, user: User) -> None:
-    if _is_skip(message.text):
-        await _finish_adult(message, state, user)
-        return
+async def on_phone_text(message: Message) -> None:
     # Номер текстом не принимаем: его нельзя проверить без SMS
-    await message.answer(t("reg_phone_not_own"), reply_markup=share_phone_keyboard())
+    await message.answer(t("reg_phone_not_own"), reply_markup=register_phone_keyboard())
 
 
 # ---------- Ребёнок ----------
@@ -139,73 +131,20 @@ async def on_child_start(callback: CallbackQuery, state: FSMContext, user: User)
         await callback.answer(t("forbidden"), show_alert=True)
         return
     await state.clear()
-    await state.set_state(RegStates.child_name)
     await callback.answer()
-    key = "reg_child_ask_name" if user.role == "parent" else "reg_student_ask_name"
-    await callback.message.answer(t(key), reply_markup=cancel_keyboard())
+    await _ask_child_name(callback.message, state, user.role)
 
 
 @router.message(RegStates.child_name, NOT_COMMAND)
-async def on_child_name(message: Message, state: FSMContext) -> None:
+async def on_child_name(message: Message, state: FSMContext, user: User) -> None:
     try:
         name = clean_name(message.text)
     except AccountError as exc:
         await message.answer(t(exc.code))
         return
-    await state.update_data(child_name=name)
-    await state.set_state(RegStates.child_grade)
-    await message.answer(t("reg_ask_grade", name=escape(name)), reply_markup=grade_keyboard())
-
-
-@router.message(RegStates.child_name, ~F.text)
-async def on_child_name_wrong(message: Message) -> None:
-    await message.answer(t("reg_bad_name"))
-
-
-@router.message(RegStates.child_grade, ~F.text | NOT_COMMAND)
-async def on_grade_text(message: Message) -> None:
-    await message.answer(t("reg_bad_grade"), reply_markup=grade_keyboard())
-
-
-@router.callback_query(RegStates.child_grade, F.data.startswith("reg:grade:"))
-async def on_grade(callback: CallbackQuery, state: FSMContext, user: User) -> None:
-    try:
-        grade = int(callback.data.rsplit(":", 1)[1]) or None
-    except ValueError:
-        await callback.answer()
-        return
-    if grade is not None and grade not in GRADES:  # кнопка из старого сообщения (были 1–4 классы)
-        await callback.answer(t("reg_bad_grade"), show_alert=True)
-        return
-    await state.update_data(grade=grade)
-    await callback.answer()
-    name = (await state.get_data()).get("child_name", "")
-    if user.role == "parent":
-        # Регистрируя ребёнка, родитель даёт согласие — явно, отдельной кнопкой
-        await state.set_state(RegStates.child_consent)
-        await callback.message.answer(
-            t("reg_consent", name=escape(name), version=get_settings().policy_version),
-            reply_markup=child_consent_keyboard(),
-        )
-        return
-    await _create_child(callback.message, state, user)
-
-
-@router.callback_query(RegStates.child_consent, F.data == "reg:consent")
-async def on_child_consent(callback: CallbackQuery, state: FSMContext, user: User) -> None:
-    await callback.answer()
-    await _create_child(callback.message, state, user)
-
-
-async def _create_child(message: Message, state: FSMContext, user: User) -> None:
-    data = await state.get_data()
-    if not data.get("child_name"):  # кнопка из старого сообщения — начнём заново
-        await state.clear()
-        await message.answer(t("reg_cancelled"))
-        return
     async with SessionLocal() as session:
         try:
-            issued = await register_child(session, user, data["child_name"], data.get("grade"))
+            issued = await register_child(session, user, name, None)
         except AccountError as exc:
             await state.clear()
             await message.answer(t(exc.code))
@@ -225,6 +164,11 @@ async def _create_child(message: Message, state: FSMContext, user: User) -> None
     )
 
 
+@router.message(RegStates.child_name, ~F.text)
+async def on_child_name_wrong(message: Message) -> None:
+    await message.answer(t("reg_bad_name"))
+
+
 @router.callback_query(F.data == "reg:cancel")
 async def on_cancel(callback: CallbackQuery, state: FSMContext) -> None:
     await state.clear()
@@ -239,3 +183,9 @@ async def on_menu(callback: CallbackQuery, state: FSMContext, user: User) -> Non
     async with SessionLocal() as session:
         db_user = await get_user(session, user.id)
     await send_home(callback.message, db_user)
+
+
+@router.callback_query(F.data.startswith("reg:"))
+async def on_outdated(callback: CallbackQuery, state: FSMContext, user: User) -> None:
+    """Кнопки прежней регистрации (имя, класс, согласие) — просто показываем меню."""
+    await on_menu(callback, state, user)

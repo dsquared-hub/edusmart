@@ -288,6 +288,8 @@ export function Avatar({
         <ellipse cx="100" cy="206" rx={46 * s} ry="7" fill="rgb(0 0 0 / 0.15)" />
         {/* рост — масштаб от ног: вещи остаются на своих местах */}
         <g transform={`translate(100 205) scale(${s}) translate(-100 -205)`}>
+          {/* «живой» персонаж: дыхание, моргание, уши (globals.css; выключается при «меньше движения») */}
+          <g className="av-breathe">
           <ExtraBehind code={equipped.extra} />
           {/* ноги и руки */}
           <rect x="70" y="170" width="24" height="34" rx="10" fill={SKIN_DARK} />
@@ -300,15 +302,21 @@ export function Avatar({
             <Outfit code={equipped.outfit} />
           </g>
           {/* голова */}
-          <ellipse cx="64" cy="50" rx="10" ry="15" transform="rotate(-25 64 50)" fill={SKIN_DARK} />
-          <ellipse cx="136" cy="50" rx="10" ry="15" transform="rotate(25 136 50)" fill={SKIN_DARK} />
+          <g className="av-ear-l">
+            <ellipse cx="64" cy="50" rx="10" ry="15" transform="rotate(-25 64 50)" fill={SKIN_DARK} />
+          </g>
+          <g className="av-ear-r">
+            <ellipse cx="136" cy="50" rx="10" ry="15" transform="rotate(25 136 50)" fill={SKIN_DARK} />
+          </g>
           <ellipse cx="100" cy="84" rx="48" ry="40" fill={SKIN} />
           <ellipse cx="100" cy="106" rx="30" ry="17" fill={SNOUT} />
           <path d={`M90 97 Q100 ${97 - horn * 1.3} 104 ${95 - horn} Q108 ${97 - horn * 0.4} 110 97 Z`} fill="#f1e3c8" stroke="#d9c7a2" strokeWidth="1.5" />
-          <circle cx="80" cy="78" r="6" fill={INK} />
-          <circle cx="120" cy="78" r="6" fill={INK} />
-          <circle cx="82" cy="76" r="2" fill="#fff" />
-          <circle cx="122" cy="76" r="2" fill="#fff" />
+          <g className="av-eyes">
+            <circle cx="80" cy="78" r="6" fill={INK} />
+            <circle cx="120" cy="78" r="6" fill={INK} />
+            <circle cx="82" cy="76" r="2" fill="#fff" />
+            <circle cx="122" cy="76" r="2" fill="#fff" />
+          </g>
           <ellipse cx="92" cy="108" rx="3" ry="2" fill={SKIN_DARK} />
           <ellipse cx="108" cy="108" rx="3" ry="2" fill={SKIN_DARK} />
           <path d="M90 115 Q100 122 110 115" fill="none" stroke={INK} strokeWidth="2.5" strokeLinecap="round" />
@@ -317,6 +325,7 @@ export function Avatar({
           <Glasses code={equipped.glasses} />
           <Hat code={equipped.hat} />
           <ExtraFront code={equipped.extra} />
+          </g>
         </g>
         {stage === "champion" && (
           <g fill="#ffd166">

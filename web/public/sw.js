@@ -1,6 +1,6 @@
 // Service worker EDU: установка как приложение, офлайн-заглушка и Web Push.
 // API не кэшируем никогда — там личные данные; страницы всегда берём из сети.
-const VERSION = "edu-v1";
+const VERSION = "edu-v2"; // новая модель в /models/ — поменяй версию, чтобы сбросить кэш
 const SHELL = ["/offline.html", "/icons/icon-192.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -27,8 +27,8 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(fetch(req).catch(() => caches.match("/offline.html")));
     return;
   }
-  // Сборка Next (имена с хешем, не меняются): сначала кэш
-  if (url.pathname.startsWith("/_next/static/")) {
+  // Сборка Next (имена с хешем, не меняются) и 3D-модели: сначала кэш
+  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/models/")) {
     event.respondWith(
       caches.match(req).then(
         (hit) =>

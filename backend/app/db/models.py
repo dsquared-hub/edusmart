@@ -13,12 +13,14 @@ from sqlalchemy import (
     Boolean,
     Date,
     DateTime,
+    Float,
     ForeignKey,
     Index,
     Integer,
     MetaData,
     SmallInteger,
     String,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -57,7 +59,7 @@ class User(Base):
     full_name: Mapped[str | None] = mapped_column(String(255))
     role: Mapped[str | None] = mapped_column(String(16))
 
-    # Вход по номеру телефона (+998…) с SMS-кодом — один номер = один пользователь
+    # Номер (+998…) из «Поделиться номером» в боте — один номер = один пользователь
     phone: Mapped[str | None] = mapped_column(String(16), unique=True)
 
     # Вход без Telegram: логин + код, который выдал родитель/учитель
@@ -107,6 +109,8 @@ class Student(Base):
     last_reminded_on: Mapped[date | None] = mapped_column(Date)
     # Родителю — одно мягкое напоминание в день, если тест ещё не пройден
     parent_reminded_on: Mapped[date | None] = mapped_column(Date)
+    # Дневное уведомление родителю (PARENT_DAY_PUSH, 16:30) — раз в день
+    parent_day_pushed_on: Mapped[date | None] = mapped_column(Date)
     # Магазин персонажа: очки обмениваются на коины. Уровень считается по всем
     # заработанным очкам (points), обмен его не снижает — тратится только остаток.
     coins: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
@@ -267,32 +271,6 @@ class ContentReport(Base):
     comment: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[str] = mapped_column(String(16), default="open", index=True)  # open | resolved
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
-
-
-class LoginRequest(Base):
-    """Вход на сайт через бота: сайт создаёт запрос, человек подтверждает его в боте.
-
-    Работает на любом адресе сайта (Login Widget — только на домене из @BotFather).
-    В БД — только хэш токена: утечка таблицы не даёт войти.
-    """
-
-    __tablename__ = "login_requests"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
-    # Число, которое сайт показывает, а в боте нужно выбрать из нескольких:
-    # чужая ссылка на вход бесполезна — злоумышленник не увидит экран жертвы
-    match_code: Mapped[int] = mapped_column(SmallInteger)
-    user_id: Mapped[int | None] = mapped_column(
-        BigInteger, ForeignKey("users.id", ondelete="CASCADE")
-    )
-    status: Mapped[str] = mapped_column(
-        String(16), default="pending"
-    )  # pending | confirmed | rejected | not_mentor | used
-    # teacher — вход начат на странице ментора: пускаем только ментора
-    as_role: Mapped[str | None] = mapped_column(String(16))
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
-    expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
 
 
 class SupportTicket(Base):
@@ -585,21 +563,7 @@ class Assignment(Base):
     done_at: Mapped[datetime | None] = mapped_column(DateTime)
 
 
-# ---------- Модуль 4: вход по SMS и семейный аккаунт ----------
-
-class SmsCode(Base):
-    """Одноразовый SMS-код: 6 цифр, 5 минут, не больше 5 попыток. В БД — только хэш."""
-
-    __tablename__ = "sms_codes"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    phone: Mapped[str] = mapped_column(String(16), index=True)
-    code_hash: Mapped[str] = mapped_column(String(64))
-    attempts: Mapped[int] = mapped_column(SmallInteger, default=0)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
-    expires_at: Mapped[datetime] = mapped_column(DateTime)
-    used_at: Mapped[datetime | None] = mapped_column(DateTime)
-
+# ---------- Модуль 4: семейный аккаунт ----------
 
 class Family(Base):
     """Семья: у ребёнка может быть несколько взрослых, у взрослого — несколько детей."""
@@ -680,3 +644,211 @@ class StudentItem(Base):
     item_code: Mapped[str] = mapped_column(String(32))
     equipped: Mapped[bool] = mapped_column(Boolean, default=False)
     bought_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+# ---------- Stories для ученика (микро-обучение) ----------
+
+class StoryDeck(Base):
+    """Stories-урок: короткие карточки по теме и мини-вопросы между ними.
+
+    Делает сам ученик (ИИ по его теме) или учитель отправляет Stories из материалов
+    урока по учебнику (material_id) — тогда колода общая для его учеников.
+    slides: [{"emoji", "title", "text", "question"?, "options"?, "correct"?, "explanation"?}]
+    """
+
+    __tablename__ = "story_decks"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    author_user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    material_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("lesson_materials.id", ondelete="SET NULL"), index=True
+    )
+    title: Mapped[str] = mapped_column(String(255))
+    subject: Mapped[str | None] = mapped_column(String(32))
+    lang: Mapped[str] = mapped_column(String(5), default="ru")
+    slides: Mapped[list] = mapped_column(JSONType)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class StoryView(Base):
+    """Stories в ленте ученика: прогресс, ответы с первой попытки и выданные EduCoin."""
+
+    __tablename__ = "story_views"
+    __table_args__ = (UniqueConstraint("deck_id", "student_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    deck_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("story_decks.id", ondelete="CASCADE"), index=True
+    )
+    student_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("students.user_id", ondelete="CASCADE"), index=True
+    )
+    status: Mapped[str] = mapped_column(String(8), default="new")  # new | done
+    answers: Mapped[dict] = mapped_column(JSONType, default=dict)  # {"<слайд>": верно с первой попытки}
+    coins: Mapped[int] = mapped_column(SmallInteger, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+
+# ---------- Сократовский тьютор ----------
+
+class TutorSession(Base):
+    """Диалог с сократовским репетитором: ИИ ведёт наводящими вопросами, ответ ученик
+    находит сам. messages: [{"role": "student"|"tutor", "text", "at"}]. Фото задачи не
+    храним — только условие своими словами (problem), которое модель написала на 1-м ходу."""
+
+    __tablename__ = "tutor_sessions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    student_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("students.user_id", ondelete="CASCADE"), index=True
+    )
+    title: Mapped[str] = mapped_column(String(255))
+    problem: Mapped[str] = mapped_column(Text, default="")
+    subject: Mapped[str | None] = mapped_column(String(32))
+    grade: Mapped[int | None] = mapped_column(SmallInteger)
+    status: Mapped[str] = mapped_column(String(8), default="active")  # active | solved
+    messages: Mapped[list] = mapped_column(JSONType, default=list)
+    points: Mapped[int] = mapped_column(SmallInteger, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+# ---------- Квесты Paper-to-Digital ----------
+
+class PaperQuest(Base):
+    """Квест «реши в тетради»: задача из закрепления пройденной темы, ученик решает на бумаге
+    и фотографирует. Vision-модель проверяет решение и почерк; верно — EduCoin ×2.
+    Фото не храним — только итог проверки."""
+
+    __tablename__ = "paper_quests"
+    __table_args__ = (UniqueConstraint("student_id", "topic_id", "task_index"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    student_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("students.user_id", ondelete="CASCADE"), index=True
+    )
+    topic_id: Mapped[int] = mapped_column(Integer, ForeignKey("topics.id", ondelete="CASCADE"))
+    task_index: Mapped[int] = mapped_column(SmallInteger)
+    task: Mapped[str] = mapped_column(Text)
+    answer: Mapped[str] = mapped_column(String(255))  # ключ — ученику не показываем до сдачи
+    status: Mapped[str] = mapped_column(String(8), default="open")  # open | passed
+    attempts: Mapped[int] = mapped_column(SmallInteger, default=0)
+    score: Mapped[int | None] = mapped_column(SmallInteger)
+    neatness: Mapped[int | None] = mapped_column(SmallInteger)
+    comment: Mapped[str | None] = mapped_column(Text)
+    coins: Mapped[int] = mapped_column(SmallInteger, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    passed_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+
+# ---------- ДТМ-симулятор ----------
+
+class DtmQuestion(Base):
+    """Банк вопросов тренировочного ДТМ: генерируется ИИ по разделам предмета, каждый ответ
+    перепроверен вторым запросом, переиспользуется всеми учениками."""
+
+    __tablename__ = "dtm_questions"
+    __table_args__ = (Index("ix_dtm_questions_subject_lang", "subject", "lang"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    subject: Mapped[str] = mapped_column(String(32))
+    section: Mapped[str] = mapped_column(String(255))
+    lang: Mapped[str] = mapped_column(String(5))
+    question: Mapped[str] = mapped_column(String(1000))
+    options: Mapped[list] = mapped_column(JSONType)
+    correct: Mapped[int] = mapped_column(SmallInteger)
+    explanation: Mapped[str] = mapped_column(String(1000))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class DtmTest(Base):
+    """Вариант ДТМ ученика: 3 обязательных блока по 10 вопросов и 2 профильных по 30,
+    180 минут. slots: [{"block", "subject", "question_id", "answer": int | None}].
+    Время — по серверу (deadline_at); после него ответы не принимаются."""
+
+    __tablename__ = "dtm_tests"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    student_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("students.user_id", ondelete="CASCADE"), index=True
+    )
+    spec1: Mapped[str] = mapped_column(String(32))
+    spec2: Mapped[str] = mapped_column(String(32))
+    lang: Mapped[str] = mapped_column(String(5))
+    status: Mapped[str] = mapped_column(String(8), default="active")  # active | finished
+    slots: Mapped[list] = mapped_column(JSONType)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    deadline_at: Mapped[datetime] = mapped_column(DateTime)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime)
+    score: Mapped[float | None] = mapped_column(Float)
+    results: Mapped[dict | None] = mapped_column(JSONType)  # по блокам: верно, баллы
+
+
+# ---------- IELTS AI Coach ----------
+
+class IeltsMaterial(Base):
+    """Задание IELTS, сгенерированное ИИ и проверенное (writing1 — с данными графика,
+    writing2, reading, listening, speaking). Общее для всех учеников — переиспользуется."""
+
+    __tablename__ = "ielts_materials"
+    __table_args__ = (Index("ix_ielts_materials_kind", "kind"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    kind: Mapped[str] = mapped_column(String(16))
+    content: Mapped[dict] = mapped_column(JSONType)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class IeltsAttempt(Base):
+    """Попытка ученика по секции IELTS: ответы (эссе / ответы теста / реплики Speaking),
+    итог проверки и Band Score (0–9 с шагом 0.5; None — ещё не проверено)."""
+
+    __tablename__ = "ielts_attempts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    student_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("students.user_id", ondelete="CASCADE"), index=True
+    )
+    material_id: Mapped[int] = mapped_column(Integer, ForeignKey("ielts_materials.id", ondelete="CASCADE"))
+    kind: Mapped[str] = mapped_column(String(16))
+    status: Mapped[str] = mapped_column(String(8), default="active")  # active | done
+    answers: Mapped[dict] = mapped_column(JSONType, default=dict)
+    result: Mapped[dict | None] = mapped_column(JSONType)
+    band: Mapped[float | None] = mapped_column(Float)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+
+# ---------- PvP-дуэли ----------
+
+class Duel(Base):
+    """Асинхронная дуэль двух учеников: одни и те же 5 вопросов, время ответа засекает сервер.
+    code — приглашение для друга (НЕ семейный код: тот даёт родителю доступ к ребёнку).
+    questions: [{"question", "options", "correct", "explanation"}];
+    results: {"<user_id>": {"answers": [{"option", "ok", "ms"}], "shown_at": iso | None, "done": bool}}."""
+
+    __tablename__ = "duels"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(String(8), unique=True)
+    creator_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("students.user_id", ondelete="CASCADE"), index=True
+    )
+    opponent_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("students.user_id", ondelete="CASCADE"), index=True
+    )
+    topic: Mapped[str] = mapped_column(String(255))
+    subject: Mapped[str | None] = mapped_column(String(32))
+    grade: Mapped[int | None] = mapped_column(SmallInteger)
+    lang: Mapped[str] = mapped_column(String(5))
+    public: Mapped[bool] = mapped_column(Boolean, default=False)  # открытый вызов — для случайного соперника
+    status: Mapped[str] = mapped_column(String(8), default="open")  # open | active | finished
+    questions: Mapped[list] = mapped_column(JSONType)
+    results: Mapped[dict] = mapped_column(JSONType, default=dict)
+    winner_id: Mapped[int | None] = mapped_column(BigInteger)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime)

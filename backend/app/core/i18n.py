@@ -34,12 +34,12 @@ def normalize_lang(lang: str | None) -> str:
 
 
 def lang_from_telegram(language_code: str | None) -> str:
-    """Язык нового пользователя по настройкам его Telegram."""
+    """Язык нового пользователя по настройкам его Telegram. Английский — только выбором
+    в меню «Язык»: в Узбекистане у многих Telegram на английском, а говорят они
+    по-русски или по-узбекски, поэтому такой пользователь начинает на русском."""
     code = (language_code or "").lower()
     if code.startswith("uz"):
         return "uz"
-    if code.startswith("en"):
-        return "en"
     return DEFAULT_LANG
 
 

@@ -31,10 +31,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         if not path.startswith("/api/") or path == "/api/health":
             return None
-        if path == "/api/auth/bot/poll":
-            # Сайт опрашивает статус раз в пару секунд; токен угадать нельзя (192 бита)
-            return "api"
-        # Вход (в т.ч. SMS-коды и приглашения в семью) — строгий лимит против перебора
+        # Вход (логин+код) и приглашения в семью — строгий лимит против перебора
         if path.startswith(("/api/auth/", "/api/v1/auth/", "/api/v1/family/join")):
             return "auth"
         if request.method == "POST" and path.startswith("/api/explain"):
