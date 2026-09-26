@@ -71,4 +71,4 @@ async def test_mentor_login_refuses_student(h):
 
 async def test_plain_start_still_works(h):
     await h.send(USER, "/start")
-    assert "Кто ты?" in h.api.last(USER).text
+    assert "Кто вы?" in h.api.last(USER).text

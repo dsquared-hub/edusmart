@@ -102,7 +102,7 @@ async def test_parent_deletes_child_data(h):
         assert await s.get(User, kid_id) is None
     # Ребёнок может начать заново как новый пользователь
     await h.send(KID, "/start")
-    assert "Кто ты?" in h.api.last(KID).text
+    assert "Кто вы?" in h.api.last(KID).text
 
 
 async def test_full_flow_points_total(h):

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from urllib.parse import urlsplit
 
-from aiogram.types import InlineKeyboardMarkup, WebAppInfo
+from aiogram.types import InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup, WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.core.config import get_settings
@@ -31,11 +31,96 @@ def language_keyboard() -> InlineKeyboardMarkup:
 
 
 def role_keyboard() -> InlineKeyboardMarkup:
+    """Бот — для взрослых; ученик — только в старом режиме BOT_STUDENT_LESSONS=1."""
     kb = InlineKeyboardBuilder()
-    kb.button(text=t("role_student"), callback_data="role:student")
     kb.button(text=t("role_parent"), callback_data="role:parent")
     kb.button(text=t("role_teacher"), callback_data="role:teacher")
+    if get_settings().bot_student_lessons:
+        kb.button(text=t("role_student"), callback_data="role:student")
     kb.button(text=t("btn_language"), callback_data="lang:menu")
+    kb.adjust(1)
+    return kb.as_markup()
+
+
+def app_url() -> str:
+    return get_settings().web_url.rstrip("/") + "/"
+
+
+def student_app_keyboard() -> InlineKeyboardMarkup:
+    """Ученик в боте: открыть приложение (Mini App по HTTPS, иначе обычная ссылка)."""
+    kb = InlineKeyboardBuilder()
+    site = _site_url("/")
+    if site:
+        kb.button(text=t("btn_open_app"), web_app=WebAppInfo(url=site))
+    elif _public_url(app_url()):
+        kb.button(text=t("btn_open_app"), url=app_url())
+    kb.button(text=t("btn_language"), callback_data="lang:menu")
+    kb.adjust(1)
+    return kb.as_markup()
+
+
+# ---------- Регистрация взрослого и ребёнка ----------
+
+def keep_name_keyboard(name: str | None) -> InlineKeyboardMarkup | None:
+    if not name:
+        return None
+    kb = InlineKeyboardBuilder()
+    kb.button(text=t("btn_reg_keep_name", name=name[:40]), callback_data="reg:keepname")
+    return kb.as_markup()
+
+
+def share_phone_keyboard() -> ReplyKeyboardMarkup:
+    """Номер берём только кнопкой Telegram — так он точно принадлежит пользователю."""
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text=t("btn_reg_share_phone"), request_contact=True)],
+            [KeyboardButton(text=t("btn_reg_skip"))],
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True,
+    )
+
+
+def after_registration_keyboard(role: str) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text=t("btn_reg_child" if role == "parent" else "btn_reg_student"), callback_data="reg:child")
+    kb.button(text=t("btn_bind_child" if role == "parent" else "btn_bind_student"), callback_data=f"{role}:bind")
+    kb.button(text=t("btn_later"), callback_data="reg:menu")
+    kb.adjust(1)
+    return kb.as_markup()
+
+
+def grade_keyboard() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    for grade in range(1, 12):
+        kb.button(text=str(grade), callback_data=f"reg:grade:{grade}")
+    kb.button(text=t("btn_grade_skip"), callback_data="reg:grade:0")
+    kb.button(text=t("btn_reg_cancel"), callback_data="reg:cancel")
+    kb.adjust(6, 5, 1, 1)
+    return kb.as_markup()
+
+
+def child_consent_keyboard() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    policy = _public_url(get_settings().policy_url)
+    if policy:
+        kb.button(text=t("btn_policy"), url=policy)
+    kb.button(text=t("btn_reg_consent"), callback_data="reg:consent")
+    kb.button(text=t("btn_reg_cancel"), callback_data="reg:cancel")
+    kb.adjust(1)
+    return kb.as_markup()
+
+
+def cancel_keyboard() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text=t("btn_reg_cancel"), callback_data="reg:cancel")
+    return kb.as_markup()
+
+
+def child_done_keyboard(role: str) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text=t("btn_reg_more_child" if role == "parent" else "btn_reg_more_student"), callback_data="reg:child")
+    kb.button(text=t("btn_home_menu"), callback_data="reg:menu")
     kb.adjust(1)
     return kb.as_markup()
 
@@ -109,10 +194,10 @@ def completed_keyboard(topic_id: int) -> InlineKeyboardMarkup | None:
 
 def parent_menu_keyboard() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
+    kb.button(text=t("btn_reg_child"), callback_data="reg:child")
     kb.button(text=t("btn_bind_child"), callback_data="parent:bind")
     kb.button(text=t("btn_consent"), callback_data="parent:consent")
     kb.button(text=t("btn_journal"), callback_data="journal:all")
-    kb.button(text=t("btn_child_access"), callback_data="access:new")
     kb.button(text=t("btn_profile"), callback_data="parent:profile")
     kb.button(text=t("btn_support"), callback_data="support:new")
     kb.button(text=t("btn_language"), callback_data="lang:menu")
@@ -122,10 +207,10 @@ def parent_menu_keyboard() -> InlineKeyboardMarkup:
 
 def teacher_menu_keyboard() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
+    kb.button(text=t("btn_reg_student"), callback_data="reg:child")
     kb.button(text=t("btn_bind_student"), callback_data="teacher:bind")
     kb.button(text=t("btn_class"), callback_data="teacher:class")
     kb.button(text=t("btn_journal"), callback_data="journal:all")
-    kb.button(text=t("btn_student_access"), callback_data="access:new")
     kb.button(text=t("btn_support"), callback_data="support:new")
     kb.button(text=t("btn_language"), callback_data="lang:menu")
     kb.adjust(1)

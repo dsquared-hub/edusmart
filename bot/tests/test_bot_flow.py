@@ -39,9 +39,9 @@ async def _topic(kid_id: int) -> Topic:
 
 async def test_start_shows_roles(h):
     await h.send(KID, "/start")
-    assert "Кто ты?" in h.api.last(KID).text
+    assert "Кто вы?" in h.api.last(KID).text
     assert h.callback_data(h.api.last(KID)) == [
-        "role:student", "role:parent", "role:teacher", "lang:menu"
+        "role:parent", "role:teacher", "role:student", "lang:menu"  # ученик — только в старом режиме
     ]
 
 
@@ -217,8 +217,10 @@ async def test_pause_keeps_topic(h):
 
 async def test_parent_creates_login_without_telegram(h):
     await _student_with_consent(h)
-    await h.press(MOM, "access:new", name="Мама")
+    await h.press(MOM, "access:new", name="Мама")  # кнопка из старых сообщений ведёт в регистрацию
     await h.send(MOM, "Тимур", name="Мама")
+    await h.press(MOM, "reg:grade:5", name="Мама")
+    await h.press(MOM, "reg:consent", name="Мама")
     text = h.api.last(MOM).text
     assert "Логин" in text and "Код" in text
     login = text.split("Логин: <code>")[1].split("</code>")[0]
@@ -241,6 +243,7 @@ async def test_teacher_class_and_student_access(h):
     await h.press(TEACHER, "role:teacher", name="Учитель")
     await h.press(TEACHER, "access:new", name="Учитель")
     await h.send(TEACHER, "Лола Каримова", name="Учитель")
+    await h.press(TEACHER, "reg:grade:0", name="Учитель")
     assert "согласие родителя" in h.api.last(TEACHER).text
     await h.send(TEACHER, "/class", name="Учитель")
     assert "Лола Каримова" in h.api.last(TEACHER).text

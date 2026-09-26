@@ -163,9 +163,15 @@ async def set_evening_time(session: AsyncSession, viewer: User, student_id: int,
     if viewer.role == "teacher":
         raise ReportError("forbidden", 403)
     student = await ensure_can_view(session, viewer, student_id)
-    h, m = (int(x) for x in value.split(":"))
-    if not (17 <= h < 22 and 0 <= m < 60):
-        raise ReportError("bad_time", 422)  # только внутри окна вечернего теста
-    student.evening_time = f"{h:02d}:{m:02d}"
+    try:
+        h, m = (int(x) for x in value.split(":"))
+    except ValueError:
+        raise ReportError("bad_time", 422) from None
+    settings = get_settings()
+    chosen = f"{h:02d}:{m:02d}"
+    # С начала окна теста и не позже 20:00 — поздние уведомления мешают сну
+    if not (0 <= m < 60 and settings.evening_start <= chosen <= settings.evening_time_latest):
+        raise ReportError("bad_time", 422)
+    student.evening_time = chosen
     await session.commit()
     return student

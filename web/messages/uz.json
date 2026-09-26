@@ -22,21 +22,7 @@
     "submit": "Kirish",
     "code_hint": "Login va kodni onang, otang yoki oʻqituvching Telegram-botda beradi.",
     "widget_unavailable": "Telegram orqali kirish hali sozlanmagan.",
-    "privacy": "Maxfiylik siyosati",
-    "mentor_link": "Men mentorman — mentorlar uchun kirish"
-  },
-  "mentor": {
-    "badge": "Mentorlar uchun",
-    "title": "Mentor uchun kirish",
-    "subtitle": "Natijalar jurnali va oʻquvchilaringiz statistikasi",
-    "hint": "Botdagi Telegram hisobingiz bilan kiring. Yangi hisob darhol mentor rolini oladi.",
-    "feature_journal": "Har bir yopilgan mavzu boʻyicha oʻquvchilar natijalari",
-    "feature_stats": "Javoblar aniqligi va qiyin mavzular",
-    "feature_codes": "Oʻquvchilar uchun login va kodlar Telegram-botda beriladi",
-    "regular_link": "Oʻquvchi yoki ota-onami? Oddiy kirish",
-    "other_role_title": "Siz mentor sifatida kirmagansiz",
-    "other_role_text": "Bu brauzerda «{name}» hisobi ochiq. Mentor sifatida kirish uchun chiqing.",
-    "continue": "Shu hisobda qolish"
+    "privacy": "Maxfiylik siyosati"
   },
   "home": {
     "hello": "Salom, {name}!",
@@ -349,7 +335,7 @@
     "neatness": "Yozma ishlar tozaligi",
     "neatness_hint": "Oʻqituvchi tekshirgan ishlar boʻyicha",
     "evening_time": "Kechki test haqida eslatma",
-    "evening_time_hint": "Kuniga bir martadan koʻp emas va faqat test hali topshirilmagan boʻlsa."
+    "evening_time_hint": "Farzandga — shu vaqtda, sizga — bir soatdan keyin, agar test hali topshirilmagan boʻlsa (20:30 dan kechiktirmay). Kuniga bir martadan koʻp emas, 21:00 dan keyin — jimlik."
   },
   "phone": {
     "title": "Telefon raqami orqali kirish",
@@ -489,7 +475,7 @@
     "stale_slot": "Bu savol allaqachon oʻtilgan.",
     "test_not_found": "Test topilmadi.",
     "bad_option": "Bunday variant yoʻq.",
-    "bad_time": "17:00 dan 22:00 gacha vaqt tanlang.",
+    "bad_time": "17:00 dan 20:00 gacha vaqt tanlang.",
     "bad_phone": "Oʻzbekiston raqami kerak: +998 va 9 raqam.",
     "sms_too_soon": "Kod allaqachon yuborilgan — bir daqiqa kuting.",
     "sms_limit": "Bu raqamga juda koʻp SMS. Bir soatdan keyin urinib koʻring.",

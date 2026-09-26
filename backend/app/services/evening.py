@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
 from app.core.timeutil import local_now, utcnow
+from app.db.session import SessionLocal
 from app.db.models import Attempt, BankQuestion, CurriculumTopic, DailyTest, Student, Topic, User
 from app.repositories import events as events_repo
 from app.services import readiness
@@ -26,6 +27,7 @@ from app.services.gamification import add_points, mark_active
 from app.services.questions import QuestionGenerator, pick_question
 
 EVENT_EVENING_DONE = "evening_done"  # тест пройден — родителям в бот
+EVENT_EVENING_MISSED = "evening_missed"  # к вечеру тест не пройден — мягкое напоминание родителям
 MAX_TOPICS = 5
 MAIN_MIN, MAIN_MAX, REVIEW_MAX = 5, 7, 2
 
@@ -44,6 +46,61 @@ def _hm(value: str) -> time:
 
 def window_open(now: datetime, settings: Settings) -> bool:
     return _hm(settings.evening_start) <= now.time() < _hm(settings.evening_end)
+
+
+def reminders_allowed(now: datetime, settings: Settings) -> bool:
+    """Тест можно пройти до 22:00, но напоминаем только до «тихого часа» (21:00):
+    сообщение в 21:30 ребёнку перед сном только мешает."""
+    return _hm(settings.evening_start) <= now.time() < _hm(settings.reminder_quiet_after)
+
+
+def parent_reminder_time(student: Student, settings: Settings) -> str:
+    """Через parent_reminder_delay минут после времени ребёнка, но не позже parent_reminder_latest."""
+    base = datetime.combine(date.today(), _hm(student.evening_time)) + timedelta(minutes=settings.parent_reminder_delay)
+    return min(base.strftime("%H:%M"), settings.parent_reminder_latest)
+
+
+async def enqueue_parent_reminders(now: datetime | None = None, settings: Settings | None = None) -> int:
+    """Раз в день мягко напомнить родителям, если ребёнок ещё не прошёл вечерний тест.
+
+    Событие evening_missed доставляют оба канала (бот и Web Push). Отметка ставится
+    условным UPDATE — бот и API могут вызывать это одновременно без дублей.
+    """
+    from sqlalchemy import or_, update
+
+    from app.db.models import ParentLink
+
+    settings = settings or get_settings()
+    now = now or local_now()
+    if not reminders_allowed(now, settings):
+        return 0
+    today, hm = now.date(), now.strftime("%H:%M")
+    queued = 0
+    async with SessionLocal() as session:
+        done = select(DailyTest.student_id).where(DailyTest.date == today, DailyTest.status == "finished")
+        has_parent = select(ParentLink.student_user_id)
+        students = list(await session.scalars(
+            select(Student).where(
+                or_(Student.parent_reminded_on.is_(None), Student.parent_reminded_on < today),
+                Student.user_id.not_in(done),
+                Student.user_id.in_(has_parent),
+            )
+        ))
+        for student in students:
+            if parent_reminder_time(student, settings) > hm or not consent_is_current(student):
+                continue
+            claimed = await session.execute(
+                update(Student)
+                .where(Student.user_id == student.user_id,
+                       or_(Student.parent_reminded_on.is_(None), Student.parent_reminded_on < today))
+                .values(parent_reminded_on=today)
+                .execution_options(synchronize_session=False)
+            )
+            if claimed.rowcount == 1:
+                await events_repo.enqueue(session, EVENT_EVENING_MISSED, {"student_user_id": student.user_id})
+                queued += 1
+        await session.commit()
+    return queued
 
 
 def _utc_bounds(day: date, settings: Settings) -> tuple[datetime, datetime]:

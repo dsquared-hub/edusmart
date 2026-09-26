@@ -12,8 +12,10 @@ from app.repositories.students import get_student
 from app.repositories.topics import list_in_progress
 from app.services.accounts import consent_is_current
 from bot.keyboards import (
+    app_url,
     parent_menu_keyboard,
     role_keyboard,
+    student_app_keyboard,
     student_menu_keyboard,
     teacher_menu_keyboard,
 )
@@ -33,6 +35,9 @@ def error_text(code: str, explain=None) -> str:
 
 async def home(user: User) -> tuple[str, object]:
     """(текст, клавиатура) главного меню для роли пользователя."""
+    if user.role == "student" and not get_settings().bot_student_lessons:
+        # Дети учатся в приложении (PWA), бот — для взрослых
+        return t("student_home_app", site=app_url()), student_app_keyboard()
     if user.role == "student":
         text = t("student_home")
         async with SessionLocal() as session:
@@ -45,7 +50,10 @@ async def home(user: User) -> tuple[str, object]:
         return t("parent_home"), parent_menu_keyboard()
     if user.role == "teacher":
         return t("teacher_home"), teacher_menu_keyboard()
-    return t("start_welcome"), role_keyboard()
+    text = t("start_welcome")
+    if not get_settings().bot_student_lessons:
+        text += "\n\n" + t("start_kid_hint", site=app_url())
+    return text, role_keyboard()
 
 
 async def send_home(message: Message, user: User) -> None:

@@ -75,6 +75,12 @@ class Settings(BaseSettings):
     curriculum_autoload: bool = True  # пустой каталог программы → загрузить образец
     evening_start: str = "17:00"  # окно теста по Ташкенту
     evening_end: str = "22:00"
+    # Напоминания — только ранним вечером: ребёнку во время семьи (17:00–20:00),
+    # родителю — мягко через parent_reminder_delay минут, но не позже reminder_quiet_after
+    evening_time_latest: str = "20:00"  # самое позднее время напоминания, которое можно выбрать
+    parent_reminder_delay: int = 60
+    parent_reminder_latest: str = "20:30"
+    reminder_quiet_after: str = "21:00"  # после — никаких уведомлений (дети готовятся ко сну)
     evening_review_days: str = "3,7,14"  # интервальное повторение: темы N дней назад
     freezes_per_week: int = 2  # бесплатные «заморозки» серии
     points_correction: int = 5  # монеты за исправление после объяснения
@@ -101,6 +107,9 @@ class Settings(BaseSettings):
     vapid_private_key: str = ""
     vapid_subject: str = "mailto:admin@example.com"
     push_worker: bool = True
+
+    # Бот — для родителей и учителей. 1 — вернуть ученикам уроки в боте (старый режим)
+    bot_student_lessons: bool = False
 
     # Ограничение частоты запросов к API с одного IP (в минуту)
     rate_limit_auth: int = 10

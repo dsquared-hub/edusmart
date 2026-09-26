@@ -15,6 +15,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
+from app.core.config import get_settings
 from app.core.i18n import t
 from app.db.models import Topic, User
 from app.db.session import SessionLocal
@@ -38,6 +39,15 @@ from bot.keyboards import (
 from bot.render import lesson_messages, question_text, review_text
 
 router = Router()
+
+
+def _lessons_enabled(_event) -> bool:
+    """Дети учатся в приложении; уроки в боте — только в старом режиме BOT_STUDENT_LESSONS=1."""
+    return get_settings().bot_student_lessons
+
+
+router.message.filter(_lessons_enabled)
+router.callback_query.filter(_lessons_enabled)
 
 
 class StudentStates(StatesGroup):

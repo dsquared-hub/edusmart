@@ -16,7 +16,7 @@ from app.repositories.students import get_parents_of, get_teachers_of
 from app.repositories.topics import get_topic
 from app.repositories.users import get_by_telegram, get_user
 from app.services.explain import EVENT_CONTENT_REPORT, EVENT_TOPIC_COMPLETED
-from app.services.evening import EVENT_EVENING_DONE
+from app.services.evening import EVENT_EVENING_DONE, EVENT_EVENING_MISSED
 from app.services.evening import summary as evening_summary
 from app.services.family_report import EVENT_ASSIGNMENT_NEW
 from app.services.support import EVENT_SUPPORT_NEW
@@ -183,6 +183,17 @@ async def _notify_evening_done(bot, session, payload: dict) -> None:
         await _send(bot, parent, text)
 
 
+async def _notify_evening_missed(bot, session, payload: dict) -> None:
+    """К вечеру тест не пройден — одно мягкое напоминание родителям (не позже 20:30)."""
+    student = await get_user(session, payload["student_user_id"])
+    if student is None:
+        return
+    for parent in await get_parents_of(session, student.id):
+        set_current_lang(parent.lang)
+        name = escape(student.full_name or t("default_child"))
+        await _send(bot, parent, t("evening_missed_parent", name=name))
+
+
 async def _notify_assignment(bot, session, payload: dict) -> None:
     """«Прислать ребёнку задание» — ученику в бот."""
     item = await session.get(Assignment, payload["assignment_id"])
@@ -206,6 +217,7 @@ HANDLERS = {
     EVENT_CHECK_READY: _notify_check_ready,
     EVENT_WORK_GRADED: _notify_work_graded,
     EVENT_EVENING_DONE: _notify_evening_done,
+    EVENT_EVENING_MISSED: _notify_evening_missed,
     EVENT_ASSIGNMENT_NEW: _notify_assignment,
 }
 

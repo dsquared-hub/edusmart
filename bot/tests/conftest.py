@@ -21,6 +21,8 @@ os.environ.update(
         "GEMINI_MODEL": "gemini-flash-lite-latest",
         "JWT_SECRET": "test-secret-that-is-long-enough-for-hs256",
         "CHECK_WORKER": "0",
+        # Старые сценарии уроков в боте; режим «бот только для взрослых» — в test_registration_bot
+        "BOT_STUDENT_LESSONS": "1",
         "MEDIA_DIR": tempfile.mkdtemp(prefix="edu-media-"),
     }
 )

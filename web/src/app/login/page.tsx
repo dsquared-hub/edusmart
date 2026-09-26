@@ -169,10 +169,6 @@ export default function LoginPage() {
         </button>
         <p className="text-center text-sm font-semibold text-muted">{t("login.code_hint")}</p>
       </form>
-
-      <a href="/mentor" className="btn btn-soft anim-rise">
-        👩‍🏫 {t("login.mentor_link")}
-      </a>
     </Page>
   );
 }

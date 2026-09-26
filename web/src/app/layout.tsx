@@ -15,7 +15,6 @@ export const metadata: Metadata = {
   title: ru.app.name,
   description: ru.home.cta_hint,
   manifest: "/manifest.webmanifest",
-  icons: { icon: "/icons/icon-192.png", apple: "/icons/icon-192.png" },
   appleWebApp: { capable: true, title: "EDU", statusBarStyle: "default" },
 };
 

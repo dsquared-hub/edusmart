@@ -214,9 +214,20 @@ async def _check_ready(session, sender, p: dict) -> None:
     ))
 
 
+async def _evening_missed(session, sender, p: dict) -> None:
+    student = await session.get(User, p["student_user_id"])
+    for parent in await get_parents_of(session, p["student_user_id"]):
+        lang = _lang(parent)
+        await send_to(session, sender, parent, Push(
+            t("push_evening_missed_title", lang, name=_child(student, lang)),
+            t("push_evening_missed_body", lang), f"/family/{p['student_user_id']}", tag=f"evening-{p['student_user_id']}",
+        ))
+
+
 HANDLERS = {
     "topic_completed": _topic_completed,
     "evening_done": _evening_done,
+    "evening_missed": _evening_missed,
     "assignment_new": _assignment,
     "work_graded": _work_graded,
     "check_ready": _check_ready,
@@ -245,11 +256,11 @@ async def evening_reminders(sender: PushSender | None, now: datetime | None = No
     """Напоминание о вечернем тесте на устройства ребёнка — во время, выбранное семьёй,
     не чаще раза в день и только если тест не пройден."""
     from app.services.accounts import consent_is_current
-    from app.services.evening import window_open
+    from app.services.evening import reminders_allowed
 
     settings = settings or get_settings()
     now = now or local_now()
-    if sender is None or not window_open(now, settings):
+    if sender is None or not reminders_allowed(now, settings):
         return 0
     sent = 0
     async with SessionLocal() as session:
@@ -282,7 +293,10 @@ async def run_worker(sender: PushSender | None, idle_seconds: float = 3.0) -> No
         try:
             await process_once(sender)
             if ticks % 100 == 0:  # ~раз в 5 минут
+                from app.services.evening import enqueue_parent_reminders
+
                 await evening_reminders(sender)
+                await enqueue_parent_reminders()
         except asyncio.CancelledError:
             raise
         except Exception:

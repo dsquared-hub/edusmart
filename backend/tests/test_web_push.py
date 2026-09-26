@@ -109,3 +109,34 @@ async def test_evening_reminder_via_push(client):
     assert await web_push.evening_reminders(sender, evening.replace(hour=23)) == 0  # окно закрыто
     async with SessionLocal() as s:
         assert (await s.get(Student, other_id)).last_reminded_on is None
+        (await s.get(Student, kid_id)).last_reminded_on = None
+        await s.commit()
+    assert await web_push.evening_reminders(sender, evening.replace(hour=21, minute=10)) == 0  # тихий час
+
+
+async def test_parent_reminder_push_and_time_limits(client):
+    from app.services.evening import enqueue_parent_reminders
+
+    kid_id = await make_student()  # вместе с родителем (PARENT_TG), согласие дано
+    parent = await login(client, PARENT_TG)
+    # Позже 20:00 выбрать нельзя; 20:00 — можно
+    for bad in ("20:30", "21:00", "16:59", "25:00", "abc"):
+        r = await client.put("/api/v1/family/evening-time", json={"student_id": kid_id, "time": bad}, headers=parent)
+        assert r.status_code == 422, bad
+    r = await client.put("/api/v1/family/evening-time", json={"student_id": kid_id, "time": "18:30"}, headers=parent)
+    assert r.json() == {"evening_time": "18:30"}
+
+    today = local_now()
+    assert await enqueue_parent_reminders(today.replace(hour=19, minute=25)) == 0  # 18:30 + час ещё не наступил
+    assert await enqueue_parent_reminders(today.replace(hour=19, minute=30)) == 1
+    assert await enqueue_parent_reminders(today.replace(hour=19, minute=35)) == 0  # раз в день
+
+    async with SessionLocal() as s:
+        from app.repositories.users import get_by_telegram
+
+        parent_id = (await get_by_telegram(s, PARENT_TG)).id
+    await _subscribe(parent_id, "https://push.example.com/mom")
+    sender = web_push.MemoryPushSender()
+    assert await web_push.process_once(sender) == 1
+    uid, msg = sender.sent[0]
+    assert uid == parent_id and "вечерний тест" in msg.title and msg.url == f"/family/{kid_id}"

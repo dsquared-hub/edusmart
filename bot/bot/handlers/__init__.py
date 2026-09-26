@@ -9,6 +9,7 @@ from bot.handlers.language import router as language_router
 from bot.handlers.owner import router as owner_router
 from bot.handlers.parent import router as parent_router
 from bot.handlers.profile import router as profile_router
+from bot.handlers.registration import router as registration_router
 from bot.handlers.reports import router as reports_router
 from bot.handlers.start import router as start_router
 from bot.handlers.student import router as student_router
@@ -22,6 +23,7 @@ main_router = Router()
 for _router in (
     web_login_router,  # /start login_… — раньше обычного /start
     start_router,
+    registration_router,
     language_router,
     owner_router,
     reports_router,

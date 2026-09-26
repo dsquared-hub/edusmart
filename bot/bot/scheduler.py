@@ -25,7 +25,7 @@ from app.repositories.students import (
 )
 from app.repositories.users import get_user
 from app.services.accounts import consent_is_current
-from app.services.evening import window_open
+from app.services.evening import enqueue_parent_reminders, reminders_allowed
 from bot.keyboards import evening_keyboard
 
 log = logging.getLogger(__name__)
@@ -106,10 +106,13 @@ async def three_day_nudge(bot) -> None:
 
 async def evening_reminders(bot, now=None) -> int:
     """Каждые 5 минут: напоминание о вечернем тесте в выбранное семьёй время —
-    не больше одного в день и только если тест сегодня ещё не пройден. Мягко, без давления."""
+    не больше одного в день и только если тест сегодня ещё не пройден. Мягко, без давления.
+
+    Детям бот пишет только в старом режиме BOT_STUDENT_LESSONS=1: теперь ребёнку
+    напоминает приложение (Web Push), а родителю — parent_reminders ниже."""
     now = now or local_now()
     settings = get_settings()
-    if not window_open(now, settings):
+    if not settings.bot_student_lessons or not reminders_allowed(now, settings):
         return 0
     sent = 0
     async with SessionLocal() as session:
@@ -141,6 +144,12 @@ async def evening_reminders(bot, now=None) -> int:
     return sent
 
 
+async def parent_reminders(bot=None, now=None) -> int:
+    """Каждые 5 минут: ставит в очередь мягкое напоминание родителям (через час после
+    времени ребёнка, не позже 20:30). Доставят очередь бота и Web Push."""
+    return await enqueue_parent_reminders(now)
+
+
 def setup_scheduler(bot, timezone: str) -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler(timezone=timezone)
     scheduler.add_job(
@@ -154,5 +163,8 @@ def setup_scheduler(bot, timezone: str) -> AsyncIOScheduler:
     )
     scheduler.add_job(
         evening_reminders, CronTrigger(minute="*/5"), args=[bot], id="evening_reminders"
+    )
+    scheduler.add_job(
+        parent_reminders, CronTrigger(minute="*/5"), args=[bot], id="parent_reminders"
     )
     return scheduler

@@ -105,6 +105,8 @@ class Student(Base):
     # Время напоминания о вечернем тесте — выбирает семья (по Ташкенту)
     evening_time: Mapped[str] = mapped_column(String(5), default="19:00")
     last_reminded_on: Mapped[date | None] = mapped_column(Date)
+    # Родителю — одно мягкое напоминание в день, если тест ещё не пройден
+    parent_reminded_on: Mapped[date | None] = mapped_column(Date)
 
 
 class ParentLink(Base):

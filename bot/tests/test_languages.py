@@ -11,9 +11,9 @@ async def test_new_user_language_from_telegram(h):
     await h.send(5001, "/start", lang="en")
     assert "Who are you?" in h.api.last(5001).text
     await h.send(5002, "/start", lang="uz")
-    assert "Sen kimsan?" in h.api.last(5002).text
+    assert "Siz kimsiz?" in h.api.last(5002).text
     await h.send(5003, "/start", lang="de")  # нет такого — русский
-    assert "Кто ты?" in h.api.last(5003).text
+    assert "Кто вы?" in h.api.last(5003).text
 
 
 async def test_switch_language_in_menu(h):
@@ -25,13 +25,13 @@ async def test_switch_language_in_menu(h):
     await h.press(KID, "lang:set:uz")
     texts = h.api.texts(KID)
     assert "oʻzbekcha" in texts[-2]
-    assert "Sen kimsan?" in texts[-1]  # меню уже на узбекском
+    assert "Siz kimsiz?" in texts[-1]  # меню уже на узбекском
     async with SessionLocal() as s:
         assert (await get_by_telegram(s, KID)).lang == "uz"  # общий с сайтом профиль
 
     # Выбор сохраняется, даже если в Telegram другой язык
     await h.send(KID, "/start", lang="en")
-    assert "Sen kimsan?" in h.api.last(KID).text
+    assert "Siz kimsiz?" in h.api.last(KID).text
 
 
 async def test_explanation_flow_in_english(h):

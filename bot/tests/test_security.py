@@ -56,7 +56,7 @@ async def test_block_unblock_and_status(h):
     await h.send(OWNER, f"/unblock {INTRUDER}", name="Владелец")
     assert f"Разблокирован: {INTRUDER}" in h.api.last(OWNER).text
     await h.send(INTRUDER, "/start", name="Хулиган")
-    assert "Кто ты?" in h.api.last(INTRUDER).text
+    assert "Кто вы?" in h.api.last(INTRUDER).text
 
 
 async def test_block_command_while_waiting_topic_is_not_sent_to_gemini(h):
@@ -90,6 +90,8 @@ async def test_names_are_html_escaped(h):
     await h.press(TEACHER, "role:teacher", name="Учитель")
     await h.press(TEACHER, "access:new", name="Учитель")
     await h.send(TEACHER, "<b>Вася</b> & Co", name="Учитель")
+    assert "&lt;b&gt;Вася&lt;/b&gt; &amp; Co" in h.api.last(TEACHER).text
+    await h.press(TEACHER, "reg:grade:7", name="Учитель")
     assert "&lt;b&gt;Вася&lt;/b&gt; &amp; Co" in h.api.last(TEACHER).text
     await h.send(TEACHER, "/class", name="Учитель")
     assert "&lt;b&gt;Вася" in h.api.last(TEACHER).text

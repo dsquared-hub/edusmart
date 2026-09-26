@@ -42,7 +42,8 @@ async def upsert_telegram_user(
         return user
     if username and user.username != username:
         user.username = username
-    if full_name and user.full_name != full_name:
+    # Взрослый указывает имя при регистрации в боте — имя из Telegram его не перезаписывает
+    if full_name and user.full_name != full_name and (user.role not in ("parent", "teacher") or not user.full_name):
         user.full_name = full_name
     return user
 

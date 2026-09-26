@@ -22,21 +22,7 @@
     "submit": "Log in",
     "code_hint": "Your mom, dad or teacher gets your login and code in the Telegram bot.",
     "widget_unavailable": "Telegram login is not set up yet.",
-    "privacy": "Privacy policy",
-    "mentor_link": "I'm a mentor — mentor login"
-  },
-  "mentor": {
-    "badge": "For mentors",
-    "title": "Mentor login",
-    "subtitle": "Results journal and stats for your students",
-    "hint": "Log in with the same Telegram account you use in the bot. A new account gets the mentor role right away.",
-    "feature_journal": "Students' results for every finished topic",
-    "feature_stats": "Answer accuracy and difficult topics",
-    "feature_codes": "Student logins and codes are issued in the Telegram bot",
-    "regular_link": "Student or parent? Regular login",
-    "other_role_title": "You're not logged in as a mentor",
-    "other_role_text": "The account “{name}” is open in this browser. Log out to log in as a mentor.",
-    "continue": "Stay in this account"
+    "privacy": "Privacy policy"
   },
   "home": {
     "hello": "Hi, {name}!",
@@ -349,7 +335,7 @@
     "neatness": "Neatness of written work",
     "neatness_hint": "Based on works checked by the teacher",
     "evening_time": "Evening quiz reminder",
-    "evening_time_hint": "At most once a day and only if the quiz isn't done yet."
+    "evening_time_hint": "Your child at this time, you an hour later if the quiz isn't done yet (no later than 20:30). At most once a day, silence after 21:00."
   },
   "phone": {
     "title": "Log in with your phone number",
@@ -489,7 +475,7 @@
     "stale_slot": "This question is already done.",
     "test_not_found": "Quiz not found.",
     "bad_option": "No such option.",
-    "bad_time": "Pick a time between 17:00 and 22:00.",
+    "bad_time": "Pick a time between 17:00 and 20:00.",
     "bad_phone": "An Uzbekistan number is needed: +998 and 9 digits.",
     "sms_too_soon": "The code was already sent — wait a minute.",
     "sms_limit": "Too many SMS to this number. Try again in an hour.",
