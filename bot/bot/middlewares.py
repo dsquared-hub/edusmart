@@ -60,7 +60,10 @@ class SecurityMiddleware(BaseMiddleware):
             return await handler(event, data)
 
         now = time.monotonic()
-        if now - self._notified.get(user.id, 0.0) > self.notify_interval:
+        # Без значения по умолчанию 0.0: monotonic() считает от старта системы,
+        # и на свежей машине (CI, новый сервер) первое уведомление потерялось бы.
+        last = self._notified.get(user.id)
+        if last is None or now - last > self.notify_interval:
             self._notified[user.id] = now
             bot = data.get("bot")
             if bot is not None and chat is not None:
@@ -95,7 +98,8 @@ class FloodControlMiddleware(BaseMiddleware):
 
         if len(stamps) > self.max_messages:
             logger.warning("FLOOD: user=%s, %s событий за %.1fs", user.id, len(stamps), self.window)
-            if now - self._last_warning.get(user.id, 0.0) > self.window * 2:
+            last = self._last_warning.get(user.id)
+            if last is None or now - last > self.window * 2:
                 self._last_warning[user.id] = now
                 await self._warn(inner, data)
             return None

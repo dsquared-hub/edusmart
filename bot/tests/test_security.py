@@ -118,3 +118,39 @@ async def test_flood_control_drops_and_warns_once():
         await flood(handler, event, {"bot": FakeBot()})
     assert len(calls) == 3
     assert len(sent) == 1  # предупреждение одно, без спама в ответ
+
+
+async def test_warnings_right_after_system_boot(monkeypatch):
+    """monotonic() считает от старта системы: на свежем сервере он меньше
+    интервала уведомлений, но первое уведомление всё равно должно уйти."""
+    import bot.middlewares as mw
+
+    monkeypatch.setattr(mw.time, "monotonic", lambda: 1.0)
+    sent = []
+
+    class FakeBot:
+        async def send_message(self, chat_id, text, **kwargs):
+            sent.append(text)
+
+    class Blocked:
+        def is_blocked(self, telegram_id):
+            return True
+
+    async def handler(event, data):
+        raise AssertionError("заблокированный не должен доходить до хендлера")
+
+    event = SimpleNamespace(from_user=SimpleNamespace(id=7, language_code="ru"),
+                            chat=SimpleNamespace(id=7, type="private"))
+    security = mw.SecurityMiddleware(notify_interval=300)
+    for _ in range(2):
+        await security(handler, event, {"bot": FakeBot(), "security": Blocked()})
+    assert len(sent) == 1
+
+    flood = FloodControlMiddleware(max_messages=1, window_seconds=60)
+    for _ in range(3):
+        await flood(lambda e, d: _noop(), event, {"bot": FakeBot()})
+    assert len(sent) == 2  # и предупреждение о флуде тоже пришло
+
+
+async def _noop():
+    return None
