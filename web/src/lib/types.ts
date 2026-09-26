@@ -1,5 +1,6 @@
-export type Theme = "sun" | "ocean" | "forest" | "berry";
-export const THEMES: Theme[] = ["sun", "ocean", "forest", "berry"];
+/** Одна палитра «Капучино»: sun — светлая, night — тёмная */
+export type Theme = "sun" | "night";
+export const THEMES: Theme[] = ["sun", "night"];
 
 export type UserSettings = {
   theme: Theme;

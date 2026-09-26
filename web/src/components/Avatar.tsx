@@ -1,46 +1,50 @@
 "use client";
 
-/* Персонаж ученика — носорог, который растёт с уровнем и носит купленные вещи.
-   Рисуется слоями в одном SVG: фон → вещи за спиной → тело → одежда → голова →
-   очки → шапка → вещи спереди. Координаты вещей привязаны к базовой фигуре,
-   а рост — это общий масштаб от ног, поэтому вещи всегда сидят на месте. */
-import { useId } from "react";
+/* Персонаж ученика — тот же 3D-носорог, что на странице входа (public/mascot-512.webp),
+   который растёт с уровнем и носит купленные вещи. Слои в одном SVG: фон → вещи за спиной →
+   носорог → перекрашенный костюм → очки → шапка → вещи спереди. Координаты вещей — в пикселях
+   картинки 512×512; сверху 68 px запаса под шапки. Одежда перекрашивает серый костюм через маску
+   public/mascot-suit-mask.png и режим наложения, поэтому объём и складки картинки сохраняются.
+   Рост — общий масштаб от ног, поэтому вещи всегда сидят на месте. */
+import { useId, type CSSProperties, type ReactNode } from "react";
 
 export type Equipped = Partial<Record<"hat" | "outfit" | "glasses" | "extra" | "background", string>>;
 export type Stage = "baby" | "kid" | "teen" | "champion";
 
-const SCALE: Record<Stage, number> = { baby: 0.7, kid: 0.82, teen: 0.93, champion: 1 };
-const HORN: Record<Stage, number> = { baby: 12, kid: 20, teen: 27, champion: 32 };
+const SCALE: Record<Stage, number> = { baby: 0.72, kid: 0.83, teen: 0.93, champion: 1 };
 
-const SKIN = "#9aa6bb";
-const SKIN_DARK = "#7d889c";
-const SNOUT = "#c5ccd8";
+const W = 512;
+const H = 580;
+const TOP = 68; // запас над головой
+const FEET = TOP + 505;
 const INK = "#2b2d42";
 
 function Background({ code }: { code?: string }) {
+  // Фоны нарисованы в сетке 200×220 и растягиваются на всю рамку
+  const scene = (children: ReactNode) => <g transform={`scale(${W / 200} ${H / 220})`}>{children}</g>;
   switch (code) {
     case "park":
-      return (
+      return scene(
         <g>
           <rect width="200" height="220" fill="#bfe6ff" />
           <circle cx="165" cy="35" r="16" fill="#ffd166" />
           <ellipse cx="100" cy="225" rx="150" ry="55" fill="#7cc576" />
           <rect x="22" y="120" width="8" height="40" fill="#8b5a2b" />
           <circle cx="26" cy="112" r="20" fill="#4caf50" />
-        </g>
+        </g>,
       );
     case "sea":
-      return (
+      return scene(
         <g>
           <rect width="200" height="220" fill="#aee2ff" />
           <circle cx="40" cy="40" r="15" fill="#ffd166" />
           <rect y="150" width="200" height="70" fill="#3fa7d6" />
           <path d="M0 150 q12 -8 25 0 t25 0 t25 0 t25 0 t25 0 t25 0 t25 0 t25 0" fill="none" stroke="#e8f7ff" strokeWidth="4" />
           <rect y="195" width="200" height="25" fill="#f4d58d" />
-        </g>
+        </g>,
       );
     case "classroom":
-      return (
+      return scene(
         <g>
           <rect width="200" height="220" fill="#f6e7c8" />
           <rect x="25" y="18" width="150" height="70" rx="4" fill="#2f6b4f" stroke="#8b5a2b" strokeWidth="5" />
@@ -48,10 +52,10 @@ function Background({ code }: { code?: string }) {
             2+2=4
           </text>
           <rect y="185" width="200" height="35" fill="#c89f6d" />
-        </g>
+        </g>,
       );
     case "space":
-      return (
+      return scene(
         <g>
           <rect width="200" height="220" fill="#1b1f3b" />
           {[
@@ -61,83 +65,80 @@ function Background({ code }: { code?: string }) {
           ))}
           <circle cx="160" cy="45" r="18" fill="#f28c38" />
           <ellipse cx="160" cy="45" rx="28" ry="6" fill="none" stroke="#ffd6a5" strokeWidth="3" />
-        </g>
+        </g>,
       );
     default:
-      return <circle cx="100" cy="112" r="96" fill="rgb(var(--soft))" />;
+      return <circle cx={W / 2} cy={H / 2 + 20} r={W / 2 - 8} fill="rgb(var(--soft))" />;
   }
 }
 
 /** Вещи за спиной: плащ, рюкзак */
 function ExtraBehind({ code }: { code?: string }) {
-  if (code === "cape")
-    return <path d="M66 118 L134 118 L156 200 Q100 212 44 200 Z" fill="#d62839" />;
-  if (code === "backpack")
-    return <rect x="126" y="122" width="30" height="46" rx="9" fill="#f4a261" stroke="#c9733a" strokeWidth="3" />;
+  if (code === "cape") return <path d="M150 296 L372 296 L436 500 Q256 548 84 500 Z" fill="#d62839" />;
+  if (code === "backpack") return <rect x="352" y="290" width="84" height="150" rx="26" fill="#f4a261" stroke="#c9733a" strokeWidth="7" />;
   return null;
 }
 
-function Outfit({ code }: { code?: string }) {
+type Paint = { fill: string; blend: CSSProperties["mixBlendMode"]; opacity?: number };
+
+/** Цвет костюма: «color» меняет оттенок и сохраняет светотень, «multiply» — затемняет. */
+const OUTFIT_PAINT: Record<string, Paint> = {
+  tshirt: { fill: "#ef476f", blend: "color" },
+  hoodie: { fill: "#2a9d8f", blend: "color" },
+  school_uniform: { fill: "#264478", blend: "color" },
+  tuxedo: { fill: "#23263a", blend: "multiply" },
+  superhero: { fill: "#3a86ff", blend: "color" },
+  astronaut: { fill: "#f4f6f8", blend: "normal", opacity: 0.82 },
+  knight: { fill: "#c3cad2", blend: "normal", opacity: 0.8 },
+};
+
+/** Детали одежды внутри маски костюма (пояса, швы) */
+function OutfitClipped({ code }: { code?: string }) {
+  switch (code) {
+    case "hoodie":
+      return <rect x="188" y="398" width="130" height="44" rx="14" fill="#1f7a70" opacity="0.85" />;
+    case "superhero":
+      return <rect x="120" y="424" width="300" height="18" fill="#ffd166" />;
+    case "astronaut":
+      return <rect x="120" y="428" width="300" height="14" fill="#f28c38" />;
+    case "knight":
+      return <path d="M110 340 H420 M110 392 H420 M256 280 V480" stroke="#6c757d" strokeWidth="6" fill="none" />;
+    default:
+      return null;
+  }
+}
+
+/** Детали одежды поверх (эмблемы, бабочка) */
+function OutfitFront({ code }: { code?: string }) {
   switch (code) {
     case "tshirt":
-      return (
-        <g>
-          <rect x="50" y="108" width="100" height="62" fill="#ef476f" />
-          <circle cx="100" cy="140" r="9" fill="#ffd166" />
-        </g>
-      );
+      return <circle cx="300" cy="370" r="20" fill="#ffd166" stroke="#e09f3e" strokeWidth="4" />;
     case "hoodie":
-      return (
-        <g>
-          <rect x="50" y="108" width="100" height="84" fill="#2a9d8f" />
-          <rect x="78" y="156" width="44" height="18" rx="6" fill="#23867a" />
-          <path d="M92 118 v16 M108 118 v16" stroke="#e9f5f3" strokeWidth="3" strokeLinecap="round" />
-        </g>
-      );
+      return <path d="M236 304 v48 M270 302 v48" stroke="#e9f5f3" strokeWidth="7" strokeLinecap="round" />;
     case "school_uniform":
-      return (
-        <g>
-          <rect x="50" y="108" width="100" height="84" fill="#264478" />
-          <path d="M84 110 L100 146 L116 110 Z" fill="#fff" />
-          <path d="M100 116 l-5 8 l5 24 l5 -24 Z" fill="#d62839" />
-        </g>
-      );
+      return <path d="M284 318 h36 v22 q-18 20 -36 0 Z" fill="#ffd166" stroke="#e09f3e" strokeWidth="3" />;
     case "tuxedo":
-      return (
-        <g>
-          <rect x="50" y="108" width="100" height="84" fill="#1f2230" />
-          <path d="M82 110 L100 160 L118 110 Z" fill="#fff" />
-          <path d="M90 118 L100 123 L110 118 L110 128 L100 123 L90 128 Z" fill="#d62839" />
-          <circle cx="100" cy="138" r="2.5" fill={INK} />
-          <circle cx="100" cy="148" r="2.5" fill={INK} />
-        </g>
-      );
+      return <path d="M204 292 L232 304 L260 292 L260 318 L232 306 L204 318 Z" fill="#d62839" stroke="#8d1624" strokeWidth="3" />;
     case "superhero":
       return (
-        <g>
-          <rect x="50" y="108" width="100" height="84" fill="#3a86ff" />
-          <rect x="50" y="170" width="100" height="8" fill="#ffd166" />
-          <path d="M100 124 l6 12 l13 2 l-10 9 l3 13 l-12 -7 l-12 7 l3 -13 l-10 -9 l13 -2 Z" fill="#d62839" stroke="#ffd166" strokeWidth="2" />
-        </g>
+        <path
+          d="M256 332 l14 28 l31 5 l-23 21 l6 31 l-28 -15 l-28 15 l6 -31 l-23 -21 l31 -5 Z"
+          fill="#d62839"
+          stroke="#ffd166"
+          strokeWidth="5"
+          strokeLinejoin="round"
+        />
       );
     case "astronaut":
       return (
         <g>
-          <rect x="50" y="108" width="100" height="84" fill="#f1f3f5" />
-          <rect x="82" y="128" width="36" height="26" rx="4" fill="#adb5bd" />
-          <circle cx="92" cy="141" r="4" fill="#ef476f" />
-          <circle cx="108" cy="141" r="4" fill="#06d6a0" />
-          <rect x="50" y="176" width="100" height="6" fill="#f28c38" />
+          <rect x="214" y="338" width="84" height="58" rx="10" fill="#adb5bd" stroke="#6c757d" strokeWidth="4" />
+          <circle cx="238" cy="367" r="9" fill="#ef476f" />
+          <circle cx="274" cy="367" r="9" fill="#06d6a0" />
         </g>
       );
     case "knight":
-      return (
-        <g>
-          <rect x="50" y="108" width="100" height="84" fill="#adb5bd" />
-          <path d="M50 132 H150 M50 156 H150 M100 108 V192" stroke="#6c757d" strokeWidth="3" />
-          <path d="M86 124 h28 v18 q-14 14 -28 0 Z" fill="#d62839" stroke="#ffd166" strokeWidth="2" />
-        </g>
-      );
+      return <path d="M222 316 h68 v44 q-34 34 -68 0 Z" fill="#d62839" stroke="#ffd166" strokeWidth="5" />;
     default:
       return null;
   }
@@ -146,28 +147,28 @@ function Outfit({ code }: { code?: string }) {
 function Glasses({ code }: { code?: string }) {
   if (code === "round_glasses")
     return (
-      <g fill="none" stroke={INK} strokeWidth="3">
-        <circle cx="80" cy="78" r="11" />
-        <circle cx="120" cy="78" r="11" />
-        <path d="M91 78 h18" />
+      <g fill="rgb(255 255 255 / 0.18)" stroke={INK} strokeWidth="7">
+        <circle cx="160" cy="164" r="32" />
+        <circle cx="302" cy="152" r="32" />
+        <path d="M192 158 Q232 138 270 148" fill="none" />
       </g>
     );
   if (code === "sunglasses")
     return (
       <g fill="#1f2230">
-        <rect x="66" y="70" width="28" height="17" rx="7" />
-        <rect x="106" y="70" width="28" height="17" rx="7" />
-        <rect x="92" y="74" width="16" height="3" />
+        <rect x="118" y="138" width="84" height="50" rx="20" />
+        <rect x="260" y="126" width="84" height="50" rx="20" />
+        <path d="M200 156 Q231 140 262 146" fill="none" stroke="#1f2230" strokeWidth="8" />
       </g>
     );
   if (code === "star_glasses") {
-    const star = (cx: number) =>
-      `M${cx} 64 l4 9 l10 1 l-8 7 l3 10 l-9 -5 l-9 5 l3 -10 l-8 -7 l10 -1 Z`;
+    const star = (cx: number, cy: number) =>
+      `M${cx} ${cy - 36} l10 22 l25 3 l-19 17 l6 25 l-22 -13 l-22 13 l6 -25 l-19 -17 l25 -3 Z`;
     return (
-      <g fill="#ff70a6" stroke="#c9184a" strokeWidth="2" strokeLinejoin="round">
-        <path d={star(80)} />
-        <path d={star(120)} />
-        <path d="M92 76 h16" fill="none" />
+      <g fill="#ff70a6" stroke="#c9184a" strokeWidth="5" strokeLinejoin="round">
+        <path d={star(160, 164)} />
+        <path d={star(302, 152)} />
+        <path d="M192 160 Q232 140 270 150" fill="none" />
       </g>
     );
   }
@@ -179,43 +180,43 @@ function Hat({ code }: { code?: string }) {
     case "cap":
       return (
         <g>
-          <path d="M60 52 Q100 6 140 52 Z" fill="#ef476f" />
-          <path d="M100 52 H160 Q156 60 140 60 H100 Z" fill="#c9184a" />
-          <circle cx="100" cy="26" r="4" fill="#c9184a" />
+          <path d="M146 96 Q262 -48 382 86 Z" fill="#ef476f" />
+          <path d="M262 90 H436 Q428 114 388 114 H262 Z" fill="#c9184a" />
+          <circle cx="264" cy="24" r="10" fill="#c9184a" />
         </g>
       );
     case "headphones":
       return (
         <g>
-          <path d="M52 70 Q52 18 100 18 Q148 18 148 70" fill="none" stroke="#3a0ca3" strokeWidth="7" />
-          <rect x="42" y="60" width="18" height="28" rx="7" fill="#7209b7" />
-          <rect x="140" y="60" width="18" height="28" rx="7" fill="#7209b7" />
+          <path d="M122 188 Q112 -6 264 -6 Q416 -6 408 176" fill="none" stroke="#3a0ca3" strokeWidth="18" />
+          <rect x="94" y="150" width="46" height="76" rx="18" fill="#7209b7" />
+          <rect x="390" y="140" width="46" height="76" rx="18" fill="#7209b7" />
         </g>
       );
     case "wizard_hat":
       return (
         <g>
-          <path d="M100 -18 L136 50 H64 Z" fill="#5a189a" />
-          <ellipse cx="100" cy="50" rx="46" ry="8" fill="#3c096c" />
-          <circle cx="94" cy="22" r="3" fill="#ffd166" />
-          <circle cx="108" cy="34" r="2.5" fill="#ffd166" />
-          <circle cx="100" cy="6" r="2" fill="#ffd166" />
+          <path d="M268 -60 L362 70 H174 Z" fill="#5a189a" />
+          <ellipse cx="268" cy="70" rx="124" ry="20" fill="#3c096c" />
+          <circle cx="254" cy="10" r="7" fill="#ffd166" />
+          <circle cx="288" cy="40" r="6" fill="#ffd166" />
+          <circle cx="266" cy="-24" r="5" fill="#ffd166" />
         </g>
       );
     case "grad_cap":
       return (
         <g>
-          <rect x="72" y="34" width="56" height="16" fill="#1f2230" />
-          <path d="M100 16 L150 30 L100 44 L50 30 Z" fill="#2b2d42" />
-          <path d="M140 30 V52" stroke="#ffd166" strokeWidth="3" />
-          <circle cx="140" cy="54" r="4" fill="#ffd166" />
+          <rect x="200" y="36" width="136" height="38" fill="#1f2230" />
+          <path d="M268 -8 L398 28 L268 64 L138 28 Z" fill="#2b2d42" />
+          <path d="M372 28 V86" stroke="#ffd166" strokeWidth="7" />
+          <circle cx="372" cy="92" r="10" fill="#ffd166" />
         </g>
       );
     case "crown":
       return (
         <g>
-          <path d="M68 50 L68 20 L84 34 L100 12 L116 34 L132 20 L132 50 Z" fill="#ffd166" stroke="#e09f3e" strokeWidth="3" strokeLinejoin="round" />
-          <circle cx="100" cy="38" r="4" fill="#ef476f" />
+          <path d="M184 76 L184 4 L224 40 L268 -18 L312 40 L352 4 L352 76 Z" fill="#ffd166" stroke="#e09f3e" strokeWidth="7" strokeLinejoin="round" />
+          <circle cx="268" cy="50" r="10" fill="#ef476f" />
         </g>
       );
     default:
@@ -223,27 +224,26 @@ function Hat({ code }: { code?: string }) {
   }
 }
 
-/** Вещи спереди: шарф, медаль */
+/** Вещи спереди: шарф, медаль, лямка рюкзака */
 function ExtraFront({ code }: { code?: string }) {
   if (code === "scarf")
     return (
       <g>
-        <rect x="62" y="112" width="76" height="14" rx="7" fill="#e63946" />
-        <rect x="112" y="118" width="13" height="30" rx="5" fill="#c1121f" />
+        <rect x="176" y="266" width="170" height="36" rx="18" fill="#e63946" />
+        <rect x="292" y="284" width="32" height="84" rx="12" fill="#c1121f" />
       </g>
     );
   if (code === "medal")
     return (
       <g>
-        <path d="M86 112 L100 140 L114 112" fill="none" stroke="#3a86ff" strokeWidth="6" />
-        <circle cx="100" cy="146" r="11" fill="#ffd166" stroke="#e09f3e" strokeWidth="3" />
-        <text x="100" y="151" textAnchor="middle" fontSize="12" fontWeight="900" fill="#9c6644">
+        <path d="M214 290 L256 362 L298 290" fill="none" stroke="#3a86ff" strokeWidth="14" />
+        <circle cx="256" cy="382" r="28" fill="#ffd166" stroke="#e09f3e" strokeWidth="7" />
+        <text x="256" y="394" textAnchor="middle" fontSize="32" fontWeight="900" fill="#9c6644">
           1
         </text>
       </g>
     );
-  if (code === "backpack")
-    return <path d="M126 116 V160" stroke="#c9733a" strokeWidth="5" strokeLinecap="round" />;
+  if (code === "backpack") return <path d="M370 298 V432" stroke="#c9733a" strokeWidth="12" strokeLinecap="round" />;
   return null;
 }
 
@@ -262,14 +262,14 @@ export function Avatar({
 }) {
   const id = `avatar${useId().replace(/[^a-zA-Z0-9]/g, "")}`; // «:r1:» не годится для url(#…)
   const frame = `${id}-frame`;
-  const torso = `${id}-torso`;
+  const suit = `${id}-suit`;
   const s = SCALE[stage];
-  const horn = HORN[stage];
+  const paint = equipped.outfit ? OUTFIT_PAINT[equipped.outfit] : undefined;
   return (
     <svg
-      viewBox="0 0 200 220"
+      viewBox={`0 0 ${W} ${H}`}
       width={size}
-      height={size * 1.1}
+      height={Math.round((size * H) / W)}
       className={className}
       role={label ? "img" : undefined}
       aria-label={label}
@@ -277,60 +277,39 @@ export function Avatar({
     >
       <defs>
         <clipPath id={frame}>
-          <rect width="200" height="220" rx="28" />
+          <rect width={W} height={H} rx="72" />
         </clipPath>
-        <clipPath id={torso}>
-          <ellipse cx="100" cy="150" rx="44" ry="42" />
-        </clipPath>
+        <mask id={suit} maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+          <image href="/mascot-suit-mask.png" width="512" height="512" />
+        </mask>
       </defs>
       <g clipPath={`url(#${frame})`}>
         <Background code={equipped.background} />
-        <ellipse cx="100" cy="206" rx={46 * s} ry="7" fill="rgb(0 0 0 / 0.15)" />
+        <ellipse cx={W / 2} cy={FEET} rx={150 * s} ry="16" fill="rgb(0 0 0 / 0.16)" />
         {/* рост — масштаб от ног: вещи остаются на своих местах */}
-        <g transform={`translate(100 205) scale(${s}) translate(-100 -205)`}>
-          {/* «живой» персонаж: дыхание, моргание, уши (globals.css; выключается при «меньше движения») */}
-          <g className="av-breathe">
-          <ExtraBehind code={equipped.extra} />
-          {/* ноги и руки */}
-          <rect x="70" y="170" width="24" height="34" rx="10" fill={SKIN_DARK} />
-          <rect x="106" y="170" width="24" height="34" rx="10" fill={SKIN_DARK} />
-          <ellipse cx="55" cy="150" rx="11" ry="22" fill={SKIN_DARK} />
-          <ellipse cx="145" cy="150" rx="11" ry="22" fill={SKIN_DARK} />
-          {/* тело и одежда по его форме */}
-          <ellipse cx="100" cy="150" rx="44" ry="42" fill={SKIN} />
-          <g clipPath={`url(#${torso})`}>
-            <Outfit code={equipped.outfit} />
-          </g>
-          {/* голова */}
-          <g className="av-ear-l">
-            <ellipse cx="64" cy="50" rx="10" ry="15" transform="rotate(-25 64 50)" fill={SKIN_DARK} />
-          </g>
-          <g className="av-ear-r">
-            <ellipse cx="136" cy="50" rx="10" ry="15" transform="rotate(25 136 50)" fill={SKIN_DARK} />
-          </g>
-          <ellipse cx="100" cy="84" rx="48" ry="40" fill={SKIN} />
-          <ellipse cx="100" cy="106" rx="30" ry="17" fill={SNOUT} />
-          <path d={`M90 97 Q100 ${97 - horn * 1.3} 104 ${95 - horn} Q108 ${97 - horn * 0.4} 110 97 Z`} fill="#f1e3c8" stroke="#d9c7a2" strokeWidth="1.5" />
-          <g className="av-eyes">
-            <circle cx="80" cy="78" r="6" fill={INK} />
-            <circle cx="120" cy="78" r="6" fill={INK} />
-            <circle cx="82" cy="76" r="2" fill="#fff" />
-            <circle cx="122" cy="76" r="2" fill="#fff" />
-          </g>
-          <ellipse cx="92" cy="108" rx="3" ry="2" fill={SKIN_DARK} />
-          <ellipse cx="108" cy="108" rx="3" ry="2" fill={SKIN_DARK} />
-          <path d="M90 115 Q100 122 110 115" fill="none" stroke={INK} strokeWidth="2.5" strokeLinecap="round" />
-          <ellipse cx="70" cy="96" rx="7" ry="4" fill="#f4a6b8" opacity="0.6" />
-          <ellipse cx="130" cy="96" rx="7" ry="4" fill="#f4a6b8" opacity="0.6" />
-          <Glasses code={equipped.glasses} />
-          <Hat code={equipped.hat} />
-          <ExtraFront code={equipped.extra} />
+        <g transform={`translate(${W / 2} ${FEET}) scale(${s}) translate(${-W / 2} ${-FEET})`}>
+          {/* «живой» персонаж дышит (globals.css; выключается при «меньше движения») */}
+          <g className="av-breathe" transform={`translate(0 ${TOP})`}>
+            <ExtraBehind code={equipped.extra} />
+            <g style={{ isolation: "isolate" }}>
+              <image href="/mascot-512.webp" width="512" height="512" />
+              {paint && (
+                <g mask={`url(#${suit})`}>
+                  <rect width="512" height="512" fill={paint.fill} opacity={paint.opacity} style={{ mixBlendMode: paint.blend }} />
+                  <OutfitClipped code={equipped.outfit} />
+                </g>
+              )}
+            </g>
+            <OutfitFront code={equipped.outfit} />
+            <Glasses code={equipped.glasses} />
+            <Hat code={equipped.hat} />
+            <ExtraFront code={equipped.extra} />
           </g>
         </g>
         {stage === "champion" && (
           <g fill="#ffd166">
-            <path d="M22 60 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3 Z" />
-            <path d="M176 96 l2.5 6 l6 2.5 l-6 2.5 l-2.5 6 l-2.5 -6 l-6 -2.5 l6 -2.5 Z" />
+            <path d="M52 150 l8 18 l18 8 l-18 8 l-8 18 l-8 -18 l-18 -8 l18 -8 Z" />
+            <path d="M456 250 l6 15 l15 6 l-15 6 l-6 15 l-6 -15 l-15 -6 l15 -6 Z" />
           </g>
         )}
       </g>

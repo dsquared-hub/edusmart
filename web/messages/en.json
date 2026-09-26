@@ -16,7 +16,10 @@
     "privacy": "Privacy policy",
     "register_title": "Sign up in the Telegram bot",
     "register_parent": "👨‍👩‍👧 I'm a parent",
-    "register_teacher": "👩‍🏫 I'm a teacher"
+    "register_teacher": "👩‍🏫 I'm a teacher",
+    "hero_1": "🧠 Topics explained step by step",
+    "hero_2": "⚔️ Duels, quests and rewards",
+    "hero_3": "👨‍👩‍👧 Parents see the progress"
   },
   "home": {
     "hello": "Hi, {name}!",
@@ -120,10 +123,8 @@
     "family_code_hint": "Show it to your parent — they'll link to you in the bot.",
     "look": "Look",
     "themes": {
-      "sun": "Cappuccino",
-      "ocean": "Ocean",
-      "forest": "Forest",
-      "berry": "Berry"
+      "sun": "Light",
+      "night": "Dark"
     },
     "a11y": "Easy reading",
     "contrast": "High contrast",
@@ -846,5 +847,21 @@
     "rules": "{total} questions, 30 seconds each. Time starts when the question appears.",
     "play": "Start the duel",
     "continue": "Continue"
+  },
+  "nav": {
+    "menu": "Menu",
+    "home": "Home",
+    "learn": "Learn",
+    "duels": "Duels",
+    "avatar": "Rhino",
+    "profile": "Profile",
+    "cabinet": "Dashboard",
+    "journal": "Journal",
+    "family": "Family",
+    "support": "Help",
+    "checks": "Works",
+    "materials": "Lessons",
+    "theme_to_night": "Dark theme",
+    "theme_to_sun": "Light theme"
   }
 }

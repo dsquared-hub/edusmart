@@ -16,7 +16,10 @@
     "privacy": "Maxfiylik siyosati",
     "register_title": "Ro‘yxatdan o‘tish — Telegram-botda",
     "register_parent": "👨‍👩‍👧 Men ota-onaman",
-    "register_teacher": "👩‍🏫 Men o‘qituvchiman"
+    "register_teacher": "👩‍🏫 Men o‘qituvchiman",
+    "hero_1": "🧠 Mavzuni qadamma-qadam tushuntiramiz",
+    "hero_2": "⚔️ Duellar, kvestlar va sovgʻalar",
+    "hero_3": "👨‍👩‍👧 Ota-onalar natijani koʻradi"
   },
   "home": {
     "hello": "Salom, {name}!",
@@ -120,10 +123,8 @@
     "family_code_hint": "Uni ota-onangga koʻrsat — ular botda senga bogʻlanadi.",
     "look": "Koʻrinish",
     "themes": {
-      "sun": "Kapuchino",
-      "ocean": "Okean",
-      "forest": "Oʻrmon",
-      "berry": "Rezavor"
+      "sun": "Yorugʻ",
+      "night": "Qorongʻi"
     },
     "a11y": "Oson oʻqish",
     "contrast": "Yuqori kontrast",
@@ -846,5 +847,21 @@
     "rules": "{total} ta savol, har biriga 30 soniya. Vaqt savol ko‘rsatilgan paytdan hisoblanadi.",
     "play": "Duelni boshlash",
     "continue": "Davom ettirish"
+  },
+  "nav": {
+    "menu": "Menyu",
+    "home": "Bosh sahifa",
+    "learn": "Oʻrganish",
+    "duels": "Duellar",
+    "avatar": "Karkidon",
+    "profile": "Profil",
+    "cabinet": "Kabinet",
+    "journal": "Jurnal",
+    "family": "Oila",
+    "support": "Yordam",
+    "checks": "Ishlar",
+    "materials": "Darslar",
+    "theme_to_night": "Qorongʻi mavzu",
+    "theme_to_sun": "Yorugʻ mavzu"
   }
 }

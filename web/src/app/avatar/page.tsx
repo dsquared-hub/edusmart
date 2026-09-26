@@ -139,90 +139,105 @@ function AvatarScreen() {
   }
 
   return (
-    <Page className="gap-5">
+    <Page wide className="gap-5">
       <header className="flex items-center gap-3">
         <IconButton href="/" label={t("profile.back")}>‹</IconButton>
         <h1 className="min-w-0 flex-1 text-2xl font-black leading-tight">🦏 {t("avatar.title")}</h1>
-        <span className="rounded-full bg-soft px-3 py-1.5 text-lg font-black" title={t("avatar.coins")}>
+        <span className="coin-pill rounded-full px-3 py-1.5 text-lg font-black" title={t("avatar.coins")}>
           {state.coins} 🪙
         </span>
       </header>
 
       {error && <Notice tone="error">{t(`errors.${error}`)}</Notice>}
 
-      <section className="card flex flex-col items-center gap-2 anim-rise">
-        <Avatar stage={state.stage} equipped={preview} size={220} label={t("avatar.title")} />
-        <p className="text-xl font-black">
-          {t(`avatar.stages.${state.stage}`)} · {t("avatar.level", { level: state.level })}
-        </p>
-        <p className="text-sm font-bold text-muted">
-          {state.next_stage_level ? t("avatar.grows_at", { level: state.next_stage_level }) : t("avatar.max_stage")}
-        </p>
-        {item && (
-          <div className="flex w-full flex-col gap-2 border-t-[length:var(--border-w)] border-line pt-3">
-            <p className="text-center font-black">
-              {ICON[item.code]} {t(`avatar.items.${item.code}`)}
-            </p>
-            {action}
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-start">
+        {/* Витрина: носорог на подиуме под «софитом» */}
+        <section className="showcase card flex flex-col items-center gap-2 lg:sticky lg:top-8">
+          <div className="relative">
+            <span className="showcase-podium" aria-hidden="true" />
+            <Avatar key={selected ?? "worn"} stage={state.stage} equipped={preview} size={240} label={t("avatar.title")} className="relative anim-pop" />
           </div>
-        )}
-      </section>
+          <p className="stage-badge">
+            {t(`avatar.stages.${state.stage}`)} · {t("avatar.level", { level: state.level })}
+          </p>
+          <p className="text-sm font-bold text-muted">
+            {state.next_stage_level ? t("avatar.grows_at", { level: state.next_stage_level }) : t("avatar.max_stage")}
+          </p>
+          {item && (
+            <div className="flex w-full flex-col gap-2 border-t-[length:var(--border-w)] border-line pt-3">
+              <p className="text-center font-black">
+                {ICON[item.code]} {t(`avatar.items.${item.code}`)}
+              </p>
+              {action}
+            </div>
+          )}
+        </section>
 
-      <section className="card flex flex-col gap-3 anim-rise" aria-labelledby="exchange-title">
-        <div className="flex items-baseline justify-between gap-2">
-          <h2 id="exchange-title" className="text-lg font-black">⭐ → 🪙 {t("avatar.exchange_title")}</h2>
-          <span className="text-sm font-bold text-muted">{t("avatar.exchange_rate", { points: state.points_per_coin })}</span>
-        </div>
-        <p className="text-sm font-bold">
-          {t("avatar.free_points")}: <span className="font-black">{state.free_points} ⭐</span>
-        </p>
-        <Exchange state={state} onDone={setState} onError={setError} />
-      </section>
-
-      <section className="flex flex-col gap-3" aria-labelledby="shop-title">
-        <h2 id="shop-title" className="label">🛍️ {t("avatar.shop_title")}</h2>
-        <div className="grid grid-cols-5 gap-1.5" role="tablist">
-          {SLOTS.map((s) => (
-            <button
-              key={s}
-              type="button"
-              role="tab"
-              aria-selected={slot === s}
-              aria-pressed={slot === s}
-              className="chip min-w-0 justify-center px-0.5 text-[11px] sm:text-sm"
-              onClick={() => setSlot(s)}
-            >
-              {t(`avatar.slots.${s}`)}
-            </button>
-          ))}
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {state.catalog
-            .filter((i) => i.slot === slot)
-            .map((i) => {
-              const owned = state.owned.includes(i.code);
-              const worn = state.equipped[i.slot] === i.code;
-              const locked = !owned && state.level < i.min_level;
-              return (
+        <div className="stagger flex min-w-0 flex-col gap-5">
+          <section className="shop-shelf flex flex-col gap-3" aria-labelledby="shop-title">
+            <h2 id="shop-title" className="label">🛍️ {t("avatar.shop_title")}</h2>
+            <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="tablist">
+              {SLOTS.map((s) => (
                 <button
-                  key={i.code}
+                  key={s}
                   type="button"
-                  aria-pressed={selected === i.code}
-                  onClick={() => setSelected(selected === i.code ? null : i.code)}
-                  className={`flex min-w-0 flex-col items-center gap-1 rounded-2xl border-[length:var(--border-w)] bg-surface p-2 text-center transition-colors ${
-                    selected === i.code ? "border-primary" : "border-line"
-                  } ${locked ? "opacity-60" : ""}`}
+                  role="tab"
+                  aria-selected={slot === s}
+                  aria-pressed={slot === s}
+                  className="chip shrink-0 text-sm"
+                  onClick={() => setSlot(s)}
                 >
-                  <span className="text-3xl" aria-hidden="true">{ICON[i.code]}</span>
-                  <span className="line-clamp-2 min-h-[2rem] w-full text-xs font-extrabold leading-tight">{t(`avatar.items.${i.code}`)}</span>
-                  <span className="text-xs font-bold text-muted">
-                    {worn ? `✅ ${t("avatar.worn")}` : owned ? t("avatar.owned") : locked ? t("avatar.locked", { level: i.min_level }) : `${i.price} 🪙`}
-                  </span>
+                  {t(`avatar.slots.${s}`)}
                 </button>
-              );
-            })}
+              ))}
+            </div>
+            {/* Каждая вещь — сразу на носороге: видно, как будет выглядеть */}
+            <div className="stagger grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {state.catalog
+                .filter((i) => i.slot === slot)
+                .map((i) => {
+                  const owned = state.owned.includes(i.code);
+                  const worn = state.equipped[i.slot] === i.code;
+                  const locked = !owned && state.level < i.min_level;
+                  return (
+                    <button
+                      key={i.code}
+                      type="button"
+                      aria-pressed={selected === i.code}
+                      onClick={() => setSelected(selected === i.code ? null : i.code)}
+                      className={`shop-item relative flex min-w-0 flex-col items-center gap-1 rounded-2xl p-2 pt-1 text-center ${locked ? "opacity-60" : ""}`}
+                    >
+                      <Avatar stage="champion" equipped={{ [i.slot]: i.code }} size={76} />
+                      <span className="line-clamp-2 min-h-[2rem] w-full text-xs font-extrabold leading-tight">
+                        {ICON[i.code]} {t(`avatar.items.${i.code}`)}
+                      </span>
+                      <span className={`price-tag ${worn ? "is-worn" : owned ? "is-owned" : ""}`}>
+                        {worn
+                          ? `✅ ${t("avatar.worn")}`
+                          : owned
+                            ? t("avatar.owned")
+                            : locked
+                              ? t("avatar.locked", { level: i.min_level })
+                              : `${i.price} 🪙`}
+                      </span>
+                    </button>
+                  );
+                })}
+            </div>
+          </section>
+
+          <section className="card flex flex-col gap-3" aria-labelledby="exchange-title">
+            <div className="flex items-baseline justify-between gap-2">
+              <h2 id="exchange-title" className="text-lg font-black">⭐ → 🪙 {t("avatar.exchange_title")}</h2>
+              <span className="text-sm font-bold text-muted">{t("avatar.exchange_rate", { points: state.points_per_coin })}</span>
+            </div>
+            <p className="text-sm font-bold">
+              {t("avatar.free_points")}: <span className="font-black">{state.free_points} ⭐</span>
+            </p>
+            <Exchange state={state} onDone={setState} onError={setError} />
+          </section>
         </div>
-      </section>
+      </div>
     </Page>
   );
 }

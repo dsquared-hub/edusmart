@@ -1,5 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/600.css";
+import "@fontsource/inter/700.css";
+import "@fontsource/inter/800.css";
+import "@fontsource/inter/900.css";
 import "@fontsource/nunito/400.css";
 import "@fontsource/nunito/700.css";
 import "@fontsource/nunito/800.css";
@@ -22,12 +27,15 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f5ecde",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5ecde" },
+    { media: "(prefers-color-scheme: dark)", color: "#241b16" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" data-theme="sun" data-contrast="normal" data-font="default" suppressHydrationWarning>
+    <html lang="ru" data-theme="sun" data-contrast="normal" data-font="default" data-age="standard" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: SETTINGS_BOOT_SCRIPT }} />
       </head>

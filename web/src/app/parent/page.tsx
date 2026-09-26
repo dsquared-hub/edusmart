@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Mascot } from "@/components/Mascot";
-import { IconButton, Notice, Page, Splash } from "@/components/ui";
+import { Notice, Page, Splash } from "@/components/ui";
 import { api, errorCode } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useT, type T } from "@/lib/i18n";
@@ -145,15 +145,13 @@ function Cabinet() {
   if (!data && !error) return <Splash />;
 
   return (
-    <Page className="gap-5">
-      <header className="flex items-center gap-3 anim-rise">
+    <Page wide className="gap-5">
+      <header className="dash-header flex items-center gap-3">
         <Mascot size={56} />
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-black leading-tight">👨‍👩‍👧 {t("cabinet.parent_title")}</h1>
+          <h1 className="text-2xl font-black leading-tight lg:text-3xl">{t("cabinet.parent_title")}</h1>
           <p className="truncate text-sm font-bold text-muted">{me?.name}</p>
         </div>
-        <IconButton href="/support" label={t("support.title")}>💬</IconButton>
-        <IconButton href="/profile" label={t("profile.title")}>⚙️</IconButton>
       </header>
 
       {error && <Notice tone="error">{t(`errors.${error}`)}</Notice>}
@@ -166,9 +164,15 @@ function Cabinet() {
         </section>
       )}
 
-      {data?.children.map((child) => <ChildCard key={child.id} child={child} />)}
+      {data && data.children.length > 0 && (
+        <div className="stagger grid gap-5 lg:grid-cols-2 lg:items-start">
+          {data.children.map((child) => (
+            <ChildCard key={child.id} child={child} />
+          ))}
+        </div>
+      )}
 
-      <nav className="flex flex-col gap-2" aria-label={t("cabinet.parent_title")}>
+      <nav className="grid gap-2 lg:grid-cols-3" aria-label={t("cabinet.parent_title")}>
         <a href="/journal" className="option">
           <span className="text-3xl" aria-hidden="true">📒</span>
           <span className="flex min-w-0 flex-1 flex-col">

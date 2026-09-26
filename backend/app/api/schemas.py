@@ -20,7 +20,7 @@ class CodeAuthIn(BaseModel):
 
 
 class SettingsIn(BaseModel):
-    theme: Literal["sun", "ocean", "forest", "berry"] | None = None
+    theme: Literal["sun", "night"] | None = None
     high_contrast: bool | None = None
     dyslexia_font: bool | None = None
     lang: Literal["ru", "uz", "en"] | None = None

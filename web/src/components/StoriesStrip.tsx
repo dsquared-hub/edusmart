@@ -51,7 +51,7 @@ export function StoriesStrip() {
           </Link>
         )}
       </div>
-      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
+      <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
         <Link href="/stories?new=1" className="flex w-[4.75rem] shrink-0 flex-col items-center gap-1.5">
           <span className="grid h-[4.25rem] w-[4.25rem] place-items-center rounded-full border-[3px] border-dashed border-primary/60 bg-surface text-3xl font-black text-primary">
             +

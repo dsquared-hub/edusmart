@@ -47,7 +47,8 @@ class Base(DeclarativeBase):
 
 
 ROLES = ("student", "parent", "teacher")
-THEMES = ("sun", "ocean", "forest", "berry")
+# Одна палитра «Капучино»: sun — светлая, night — тёмная. Старые темы читаются как sun.
+THEMES = ("sun", "night")
 
 
 class User(Base):

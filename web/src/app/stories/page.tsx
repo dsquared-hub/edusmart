@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { RequireStudent } from "@/components/RequireStudent";
 import { Thinking } from "@/components/Thinking";
-import { IconButton, Notice, Page, Splash } from "@/components/ui";
+import { GameBanner, Notice, Page, Splash } from "@/components/ui";
 import { api, errorCode } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
@@ -55,11 +55,11 @@ function StoriesView() {
   return (
     <Page className="gap-5">
       {busy && <Thinking title={t("stories.thinking")} />}
-      <header className="flex items-center gap-3">
-        <IconButton href="/" label={t("profile.back")}>‹</IconButton>
-        <h1 className="min-w-0 flex-1 text-2xl font-black leading-tight">📱 {t("stories.title")}</h1>
-        {feed && <span className="chip shrink-0 !min-h-[2.5rem]">🪙 {feed.coins}</span>}
-      </header>
+      <GameBanner
+        icon="📱"
+        title={t("stories.title")}
+        aside={feed && <span className="chip shrink-0 !min-h-[2.5rem]">🪙 {feed.coins}</span>}
+      />
 
       {error && <Notice tone="error">{t(`errors.${error}`)}</Notice>}
 

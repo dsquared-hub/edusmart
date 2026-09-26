@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { RequireStudent } from "@/components/RequireStudent";
 import { Thinking } from "@/components/Thinking";
-import { IconButton, Notice, Page, Splash } from "@/components/ui";
+import { GameBanner, Notice, Page, Splash } from "@/components/ui";
 import { api, errorCode } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import type { PaperQuest } from "@/lib/types";
@@ -40,15 +40,10 @@ function Quests() {
 
   return (
     <Page className="gap-5">
-      <header className="flex items-center gap-3">
-        <IconButton href="/" label={t("profile.back")}>‹</IconButton>
-        <h1 className="min-w-0 flex-1 text-2xl font-black leading-tight">📄 {t("quests.title")}</h1>
-      </header>
-
-      <section className="card flex flex-col gap-2 anim-rise">
-        <p className="font-bold">{t("quests.intro", { coins: data?.reward ?? 6 })}</p>
-        <p className="text-sm font-bold text-muted">{t("quests.how")}</p>
-      </section>
+      <GameBanner icon="📄" title={t("quests.title")}>
+        <p className="text-base">{t("quests.intro", { coins: data?.reward ?? 6 })}</p>
+        <p className="mt-1 opacity-80">{t("quests.how")}</p>
+      </GameBanner>
 
       {error && <Notice tone="error">{t(`errors.${error}`)}</Notice>}
 

@@ -24,11 +24,9 @@ import {
 import { THEMES, type Theme, type UserSettings } from "@/lib/types";
 
 // Превью темы — фиксированные цвета, чтобы было видно, как она выглядит
-const SWATCH: Record<Theme, { bg: string; primary: string; accent: string; icon: string }> = {
-  sun: { bg: "#f5ecde", primary: "#6f4226", accent: "#00d6c4", icon: "☕" }, // «Капучино»
-  ocean: { bg: "#ecf5ff", primary: "#2a6ce2", accent: "#1ec4e8", icon: "🌊" },
-  forest: { bg: "#eef8ee", primary: "#20864a", accent: "#a0d250", icon: "🌲" },
-  berry: { bg: "#fcf0fa", primary: "#983ac4", accent: "#ff6ea6", icon: "🍇" },
+const SWATCH: Record<Theme, { bg: string; fg: string; primary: string; accent: string; icon: string }> = {
+  sun: { bg: "#f5ecde", fg: "#3a2418", primary: "#6f4226", accent: "#00c4b4", icon: "☀️" },
+  night: { bg: "#241b16", fg: "#f6ecde", primary: "#deaa76", accent: "#2dd4bf", icon: "🌙" },
 };
 
 function Toggle({
@@ -235,7 +233,7 @@ export default function ProfilePage() {
                 className={`flex flex-col items-center gap-2 rounded-3xl p-4 font-extrabold transition-transform active:scale-95 ${
                   active ? "ring-4 ring-primary ring-offset-2 ring-offset-bg" : ""
                 }`}
-                style={{ background: sw.bg, color: "#2b263a", border: `3px solid ${sw.primary}` }}
+                style={{ background: sw.bg, color: sw.fg, border: `3px solid ${sw.primary}` }}
               >
                 <span className="flex gap-1.5" aria-hidden="true">
                   <span className="h-8 w-8 rounded-full" style={{ background: sw.primary }} />

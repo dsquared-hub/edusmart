@@ -128,14 +128,14 @@ async def test_me_and_settings_saved_in_profile(client):
     headers = await login(client)
     r = await client.patch(
         "/api/me/settings",
-        json={"theme": "ocean", "high_contrast": True, "dyslexia_font": True},
+        json={"theme": "night", "high_contrast": True, "dyslexia_font": True},
         headers=headers,
     )
     assert r.json()["settings"] == {
-        "theme": "ocean", "high_contrast": True, "dyslexia_font": True, "lang": "ru"
+        "theme": "night", "high_contrast": True, "dyslexia_font": True, "lang": "ru"
     }
-    assert (await client.get("/api/me", headers=headers)).json()["settings"]["theme"] == "ocean"
-    r = await client.patch("/api/me/settings", json={"theme": "neon"}, headers=headers)
+    assert (await client.get("/api/me", headers=headers)).json()["settings"]["theme"] == "night"
+    r = await client.patch("/api/me/settings", json={"theme": "ocean"}, headers=headers)
     assert r.status_code == 422
 
 

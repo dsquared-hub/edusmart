@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { AppShell } from "@/components/AppShell";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { I18nProvider, isLang, type Lang } from "@/lib/i18n";
 import { captureInstallPrompt, registerServiceWorker } from "@/lib/pwa";
@@ -43,7 +44,7 @@ function LocalizedApp({ children }: { children: ReactNode }) {
 
   return (
     <I18nProvider lang={lang} setLang={setLang}>
-      {children}
+      <AppShell>{children}</AppShell>
     </I18nProvider>
   );
 }

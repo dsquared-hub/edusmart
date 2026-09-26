@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Mascot } from "@/components/Mascot";
 import { Dots, IconButton, Notice, ProgressBar } from "@/components/ui";
 import { Visual } from "@/components/visuals/Visual";
 import { api, ApiError, errorCode } from "@/lib/api";
+import { celebrate } from "@/lib/confetti";
 import { useT } from "@/lib/i18n";
+import { subjectIcon } from "@/lib/subjects";
 import { haptic } from "@/lib/telegram";
 import type { AnswerResult, SimplerStep, Topic } from "@/lib/types";
 import { Options, type OptionState } from "./Options";
@@ -85,6 +88,7 @@ export function StepScreen({
         onTopic(res.topic);
         setPhase("correct");
         setFloatKey((k) => k + 1);
+        celebrate(false); // небольшой салют — радость без перегруза
       } else {
         haptic("error");
         setShake(option);
@@ -178,35 +182,48 @@ export function StepScreen({
 
       {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
 
-      <article key={`${index}-${simpler && !showOriginal ? "s" : "o"}`} className="card flex flex-col gap-4 anim-rise">
-        {simpler && (
-          <div className="flex items-center justify-between gap-2">
-            {!showOriginal ? (
-              <span className="rounded-full bg-accent px-3 py-1 text-sm font-black text-ink">🐢 {t("step.simpler_badge")}</span>
-            ) : (
-              <span />
-            )}
-            <button
-              type="button"
-              className="text-sm font-extrabold text-primary underline underline-offset-4"
-              onClick={() => setShowOriginal((v) => !v)}
-            >
-              {showOriginal ? t("step.show_simpler") : t("step.show_original")}
-            </button>
+      {/* Шаг — карточка из «колоды»: сзади выглядывают оставшиеся шаги */}
+      <div className="step-deck" data-left={Math.min(2, topic.total_steps - index - 1)}>
+        <article key={`${index}-${simpler && !showOriginal ? "s" : "o"}`} className="card step-card flex flex-col gap-4 anim-card-in">
+          {topic.title && (
+            <span className="step-badge max-w-full truncate">
+              {subjectIcon(topic.subject)} {topic.title}
+            </span>
+          )}
+          {simpler && (
+            <div className="flex items-center justify-between gap-2">
+              {!showOriginal ? (
+                <span className="rounded-full bg-accent px-3 py-1 text-sm font-black text-ink">🐢 {t("step.simpler_badge")}</span>
+              ) : (
+                <span />
+              )}
+              <button
+                type="button"
+                className="text-sm font-extrabold text-primary underline underline-offset-4"
+                onClick={() => setShowOriginal((v) => !v)}
+              >
+                {showOriginal ? t("step.show_simpler") : t("step.show_original")}
+              </button>
+            </div>
+          )}
+          <h1 className="text-3xl font-black leading-tight">{shown.title}</h1>
+          <p className="text-xl font-semibold leading-relaxed">{shown.text}</p>
+          <Visual visual={shown.visual} />
+          <div className="rounded-2xl bg-accent/20 p-4">
+            <div className="mb-1 text-sm font-black uppercase tracking-wide text-muted">💡 {t("step.example")}</div>
+            <p className="text-lg font-bold">{shown.example}</p>
           </div>
-        )}
-        <h1 className="text-3xl font-black leading-tight">{shown.title}</h1>
-        <p className="text-xl font-semibold leading-relaxed">{shown.text}</p>
-        <Visual visual={shown.visual} />
-        <div className="rounded-2xl bg-accent/20 p-4">
-          <div className="mb-1 text-sm font-black uppercase tracking-wide text-muted">💡 {t("step.example")}</div>
-          <p className="text-lg font-bold">{shown.example}</p>
-        </div>
-      </article>
+        </article>
+      </div>
 
-      <section className="flex flex-col gap-3" aria-labelledby="check-q">
-        <h2 className="label">❓ {t("step.check")}</h2>
-        <p id="check-q" className="text-xl font-extrabold">{step.check_question}</p>
+      <section className="check-card flex flex-col gap-3" aria-labelledby="check-q">
+        <div className="flex items-center gap-3">
+          <Mascot mood={phase === "correct" ? "cheer" : "thinking"} size={56} />
+          <div className="min-w-0 flex-1">
+            <h2 className="label !mb-1">❓ {t("step.check")}</h2>
+            <p id="check-q" className="text-xl font-extrabold">{step.check_question}</p>
+          </div>
+        </div>
         <Options
           options={step.options}
           states={states}

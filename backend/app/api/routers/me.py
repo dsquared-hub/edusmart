@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import api_error, current_user, get_explain, get_session
 from app.api.schemas import SettingsIn
 from app.core.config import get_settings
-from app.db.models import User
+from app.db.models import THEMES, User
 from app.repositories import topics as topics_repo
 from app.repositories.students import completed_count, get_student
 from app.services.accounts import AccountError, consent_is_current, update_settings
@@ -26,7 +26,7 @@ async def me_payload(session: AsyncSession, user: User) -> dict:
         "has_telegram": user.telegram_id is not None,
         "login": user.login,
         "settings": {
-            "theme": user.theme,
+            "theme": user.theme if user.theme in THEMES else "sun",
             "high_contrast": user.high_contrast,
             "dyslexia_font": user.dyslexia_font,
             "lang": user.lang,

@@ -5,8 +5,15 @@ import type { ReactNode } from "react";
 import { useT } from "@/lib/i18n";
 import { Mascot } from "./Mascot";
 
-export function Page({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <main className={`mx-auto flex min-h-[100dvh] w-full max-w-app flex-col px-4 pb-8 pt-4 ${className}`}>{children}</main>;
+/** Страница. Дети появляются по очереди (.stagger); wide — для кабинетов взрослых на компьютере. */
+export function Page({ children, className = "", wide = false }: { children: ReactNode; className?: string; wide?: boolean }) {
+  return (
+    <main
+      className={`stagger mx-auto flex min-h-[100dvh] w-full max-w-app flex-col px-4 pb-8 pt-4 lg:pt-8 ${wide ? "lg:max-w-5xl lg:px-8" : ""} ${className}`}
+    >
+      {children}
+    </main>
+  );
 }
 
 export function Splash() {
@@ -91,5 +98,46 @@ export function Notice({ tone = "info", children }: { tone?: "info" | "error"; c
     <div role={tone === "error" ? "alert" : "status"} className={`rounded-2xl border-[length:var(--border-w)] px-4 py-3 font-bold ${toneCls}`}>
       {children}
     </div>
+  );
+}
+
+/** Шапка игровых разделов (квесты, дуэли, сторис): яркий баннер с носорогом. */
+export function GameBanner({
+  icon,
+  title,
+  back = "/",
+  aside,
+  children,
+}: {
+  icon: string;
+  title: string;
+  back?: string;
+  aside?: ReactNode;
+  children?: ReactNode;
+}) {
+  const t = useT();
+  return (
+    <header className="game-banner relative overflow-hidden rounded-4xl p-4 text-on-primary">
+      <div className="flex items-center gap-3">
+        <Link
+          href={back}
+          aria-label={t("profile.back")}
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-on-primary/15 text-2xl font-black"
+        >
+          ‹
+        </Link>
+        <span className="game-icon grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-3xl" aria-hidden="true">
+          {icon}
+        </span>
+        <h1 className="min-w-0 flex-1 text-2xl font-black leading-tight">{title}</h1>
+        {aside}
+      </div>
+      {children && (
+        <div className="relative mt-3 flex items-end gap-2">
+          <div className="min-w-0 flex-1 text-sm font-bold opacity-90">{children}</div>
+          <Mascot mood="cheer" size={72} className="-mb-4 -mr-1" />
+        </div>
+      )}
+    </header>
   );
 }

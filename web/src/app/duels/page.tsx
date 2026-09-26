@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { RequireStudent } from "@/components/RequireStudent";
 import { Thinking } from "@/components/Thinking";
-import { IconButton, Notice, Page, Splash } from "@/components/ui";
+import { GameBanner, Notice, Page, Splash } from "@/components/ui";
 import { api, errorCode } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { SUBJECT_ICON } from "@/lib/subjects";
@@ -57,11 +57,9 @@ function Duels() {
   return (
     <Page className="gap-5">
       {busy === "create" && <Thinking title={t("duels.preparing")} />}
-      <header className="flex items-center gap-3">
-        <IconButton href="/" label={t("profile.back")}>‹</IconButton>
-        <h1 className="min-w-0 flex-1 text-2xl font-black leading-tight">⚔️ {t("duels.title")}</h1>
-      </header>
-      <p className="font-bold text-muted">{t("duels.intro")}</p>
+      <GameBanner icon="⚔️" title={t("duels.title")}>
+        {t("duels.intro")}
+      </GameBanner>
 
       {error && <Notice tone="error">{t(`errors.${error}`)}</Notice>}
 
