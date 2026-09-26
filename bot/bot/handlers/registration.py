@@ -18,7 +18,7 @@ from app.db.models import User
 from app.db.session import SessionLocal
 from app.repositories.users import get_user
 from app.services.accounts import AccountError, choose_role
-from app.services.registration import ADULT_ROLES, attach_phone, clean_name, register_child, set_name
+from app.services.registration import ADULT_ROLES, GRADES, attach_phone, clean_name, register_child, set_name
 from bot.handlers.common import send_home
 from bot.keyboards import (
     after_registration_keyboard,
@@ -115,6 +115,10 @@ async def on_contact(message: Message, state: FSMContext, user: User) -> None:
         except AccountError as exc:
             await message.answer(t(exc.code), reply_markup=share_phone_keyboard())
             return
+    if (await state.get_data()).get("from_site"):  # пришёл с сайта за кодом — регистрация уже была
+        await state.clear()
+        await message.answer(t("phonelink_ready"), reply_markup=ReplyKeyboardRemove())
+        return
     await _finish_adult(message, state, user)
 
 
@@ -169,6 +173,9 @@ async def on_grade(callback: CallbackQuery, state: FSMContext, user: User) -> No
         grade = int(callback.data.rsplit(":", 1)[1]) or None
     except ValueError:
         await callback.answer()
+        return
+    if grade is not None and grade not in GRADES:  # кнопка из старого сообщения (были 1–4 классы)
+        await callback.answer(t("reg_bad_grade"), show_alert=True)
         return
     await state.update_data(grade=grade)
     await callback.answer()

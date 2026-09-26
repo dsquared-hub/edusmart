@@ -1,6 +1,7 @@
 """Модуль 4: вход по номеру телефона с SMS-кодом и семейный аккаунт."""
 from __future__ import annotations
 
+import json
 import re
 from datetime import timedelta
 
@@ -83,6 +84,80 @@ async def test_sms_login_flow(client, sms_box):
         await s.commit()
     again = await sms_login(client, sms_box, "+998901234567", role=None)
     assert (await client.get("/api/me", headers=again)).json()["id"] == r.json()["id"]
+
+
+async def test_code_via_telegram(client, sms_box, monkeypatch):
+    """Код в Telegram — только на номер, которым поделились в боте; SMS при этом не уходит."""
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "bot_token", "123:abc")
+    monkeypatch.setattr(get_settings(), "bot_username", "edu_bot")
+    tg_box, chats = MemorySender(), []
+    app.state.telegram_sms = lambda chat_id: chats.append(chat_id) or tg_box
+    try:
+        # Номер не привязан к боту — подсказываем, куда идти
+        r = await client.post("/api/v1/auth/sms/request", json={"phone": "901112233", "channel": "telegram"})
+        assert r.status_code == 409 and r.json()["detail"] == {"code": "tg_not_linked", "bot_username": "edu_bot"}
+
+        async with SessionLocal() as s:
+            user = await upsert_telegram_user(s, 777001, full_name="Мама")
+            user.phone = "+998901112233"
+            await s.commit()
+
+        r = await client.post("/api/v1/auth/sms/request", json={"phone": "90 111 22 33", "channel": "telegram", "lang": "ru"})
+        assert r.status_code == 200, r.text
+        assert chats == [777001] and not sms_box.sent
+        r = await client.post("/api/v1/auth/sms/verify", json={"phone": "901112233", "code": last_code(tg_box)})
+        assert r.status_code == 200 and r.json()["me"]["id"] == user.id  # вошли в аккаунт из бота
+
+        # Лимиты общие с SMS: сразу повторно — нельзя
+        r = await client.post("/api/v1/auth/sms/request", json={"phone": "901112233", "channel": "telegram"})
+        assert r.status_code == 429 and r.json()["detail"]["code"] == "sms_too_soon"
+    finally:
+        app.state.telegram_sms = None
+
+
+async def test_telegram_sender():
+    import httpx
+
+    from app.services.sms import TelegramSender
+
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json={"ok": True})
+
+    await TelegramSender("123:abc", 777, transport=httpx.MockTransport(handler)).send("+998901234567", "код 123456")
+    assert str(seen[0].url) == "https://api.telegram.org/bot123:abc/sendMessage"
+    assert json.loads(seen[0].content) == {"chat_id": 777, "text": "код 123456"}
+
+    blocked = TelegramSender("123:abc", 777, transport=httpx.MockTransport(lambda r: httpx.Response(403, text="bot was blocked")))
+    with pytest.raises(RuntimeError, match="403"):
+        await blocked.send("+998901234567", "x")
+
+
+async def test_sms_gate_sender():
+    import httpx
+
+    from app.core.config import Settings
+    from app.services.sms import SmsGateSender
+
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(202, json={"id": "abc", "state": "Pending"})
+
+    settings = Settings(sms_gate_user="u", sms_gate_password="p", sms_code_ttl=300)
+    await SmsGateSender(settings, transport=httpx.MockTransport(handler)).send("+998901234567", "код 123456")
+    req = seen[0]
+    assert str(req.url) == settings.sms_gate_url and req.headers["authorization"] == "Basic dTpw"
+    assert json.loads(req.content) == {"textMessage": {"text": "код 123456"}, "phoneNumbers": ["+998901234567"], "ttl": 300}
+
+    failing = SmsGateSender(settings, transport=httpx.MockTransport(lambda r: httpx.Response(401, text="Unauthorized")))
+    with pytest.raises(RuntimeError, match="401"):
+        await failing.send("+998901234567", "x")
 
 
 async def test_sms_limits(client, sms_box):

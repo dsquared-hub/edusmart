@@ -9,6 +9,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from app.core.config import get_settings
 from app.core.i18n import t
 from app.db.models import Topic
+from app.services.registration import GRADES
 
 
 def _site_url(path: str = "") -> str | None:
@@ -92,11 +93,11 @@ def after_registration_keyboard(role: str) -> InlineKeyboardMarkup:
 
 def grade_keyboard() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    for grade in range(1, 12):
+    for grade in GRADES:
         kb.button(text=str(grade), callback_data=f"reg:grade:{grade}")
     kb.button(text=t("btn_grade_skip"), callback_data="reg:grade:0")
     kb.button(text=t("btn_reg_cancel"), callback_data="reg:cancel")
-    kb.adjust(6, 5, 1, 1)
+    kb.adjust(len(GRADES), 1, 1)
     return kb.as_markup()
 
 

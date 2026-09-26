@@ -10,6 +10,7 @@ import { Dots, IconButton, Notice, Page } from "@/components/ui";
 import { api, ApiError, errorCode } from "@/lib/api";
 import { shrinkImage } from "@/lib/image";
 import { useT } from "@/lib/i18n";
+import { GRADES } from "@/lib/subjects";
 import type { Journal, WorkCheck } from "@/lib/types";
 
 const MAX_FILES = 40;
@@ -102,7 +103,7 @@ function UploadForm({ onCreated }: { onCreated: (id: number) => void }) {
           <span className="label">{t("learn.grade")}</span>
           <select className="field" value={grade} onChange={(e) => setGrade(e.target.value)}>
             <option value="">—</option>
-            {Array.from({ length: 11 }, (_, i) => i + 1).map((g) => (
+            {GRADES.map((g) => (
               <option key={g} value={g}>
                 {g}
               </option>

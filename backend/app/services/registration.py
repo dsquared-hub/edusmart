@@ -18,7 +18,7 @@ from app.services.sms import SmsError, normalize_phone
 
 ADULT_ROLES = ("parent", "teacher")
 MIN_NAME, MAX_NAME = 2, 60
-GRADES = range(1, 12)
+GRADES = range(5, 12)  # платформа — для 5–11 классов
 
 
 def clean_name(raw: str | None) -> str:

@@ -138,6 +138,15 @@ function Home() {
 
       {consentOk && <EveningCard />}
 
+      <Link href="/avatar" className="option anim-rise">
+        <span className="text-3xl" aria-hidden="true">🦏</span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span>{t("avatar.home_card")}</span>
+          <span className="text-sm font-bold text-muted">{t("avatar.home_hint")}</span>
+        </span>
+        <span className="text-2xl text-muted" aria-hidden="true">›</span>
+      </Link>
+
       {progress && progress.in_progress.length > 0 && (
         <section className="flex flex-col gap-3">
           <h2 className="label">▶️ {t("home.continue")}</h2>

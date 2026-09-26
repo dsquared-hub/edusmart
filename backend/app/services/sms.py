@@ -92,7 +92,7 @@ class EskizSender:
         if self._token and time.time() - self._token_at < 25 * 24 * 3600:
             return self._token
         r = await client.post(f"{self.BASE}/auth/login", data={"email": self.settings.eskiz_email, "password": self.settings.eskiz_password})
-        r.raise_for_status()
+        _raise_for_eskiz(r, "вход")
         self._token, self._token_at = r.json()["data"]["token"], time.time()
         return self._token
 
@@ -114,13 +114,76 @@ class EskizSender:
                     headers={"Authorization": f"Bearer {token}"},
                     data={"mobile_phone": phone.lstrip("+"), "message": text, "from": self.settings.eskiz_from},
                 )
-            r.raise_for_status()
+            _raise_for_eskiz(r, "отправка SMS")
+
+
+def _raise_for_eskiz(r, action: str) -> None:
+    """Ошибка Eskiz с текстом ответа: «шаблон не прошёл модерацию», «неверный пароль» и т. п."""
+    if r.is_error:
+        raise RuntimeError(f"Eskiz ({action}): HTTP {r.status_code} {r.text[:300]}")
+
+
+class SmsGateSender:
+    """SMS Gateway for Android (sms-gate.app): SMS уходит с SIM-карты своего телефона.
+
+    Облако приложения (по умолчанию) или его локальный сервер в той же сети:
+    SMS_GATE_URL=http://<ip-телефона>:8080/message. Логин и пароль — из приложения.
+    """
+
+    def __init__(self, settings: Settings, transport=None):
+        self.settings = settings
+        self._transport = transport  # тесты
+
+    async def send(self, phone: str, text: str) -> None:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=15, transport=self._transport) as client:
+            r = await client.post(
+                self.settings.sms_gate_url,
+                auth=(self.settings.sms_gate_user, self.settings.sms_gate_password),
+                # ttl: код живёт 5 минут — если телефон офлайн, позже SMS уже не нужна
+                json={"textMessage": {"text": text}, "phoneNumbers": [phone], "ttl": self.settings.sms_code_ttl},
+            )
+            if r.is_error:
+                raise RuntimeError(f"SMS Gateway: HTTP {r.status_code} {r.text[:300]}")
+
+
+class TelegramSender:
+    """Код входа сообщением от нашего бота — бесплатно, вместо SMS.
+
+    Только на номер, которым человек поделился в боте кнопкой «Поделиться номером»:
+    Telegram подтвердил, что номер его, а бот знает чат.
+    """
+
+    def __init__(self, bot_token: str, chat_id: int, transport=None):
+        self.bot_token = bot_token
+        self.chat_id = chat_id
+        self._transport = transport  # тесты
+
+    async def send(self, phone: str, text: str) -> None:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=15, transport=self._transport) as client:
+            r = await client.post(
+                f"https://api.telegram.org/bot{self.bot_token}/sendMessage",
+                json={"chat_id": self.chat_id, "text": text},
+            )
+            if r.is_error:  # токен бота в текст ошибки не попадает
+                raise RuntimeError(f"Telegram: HTTP {r.status_code} {r.text[:300]}")
+
+
+async def telegram_chat(session: AsyncSession, raw_phone: str) -> int | None:
+    """Чат в Telegram, привязанный к номеру, — или None, если номером не делились в боте."""
+    phone = normalize_phone(raw_phone)
+    return await session.scalar(select(User.telegram_id).where(User.phone == phone, User.telegram_id.is_not(None)))
 
 
 def make_sender(settings: Settings | None = None) -> SmsSender:
     settings = settings or get_settings()
     if settings.sms_provider == "eskiz":
         return EskizSender(settings)
+    if settings.sms_provider == "smsgate":
+        return SmsGateSender(settings)
     return LogSender()
 
 

@@ -43,7 +43,7 @@ async def _read_photo(photo: UploadFile | None, max_mb: int) -> tuple[bytes | No
 async def start_explain(
     title: str = Form(""),
     subject: str | None = Form(None),
-    grade: int | None = Form(None, ge=1, le=11),
+    grade: int | None = Form(None, ge=5, le=11),
     photo: UploadFile | None = File(None),
     user: User = Depends(current_user),
     session: AsyncSession = Depends(get_session),

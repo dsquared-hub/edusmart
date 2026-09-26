@@ -6,14 +6,6 @@
   "login": {
     "title": "Hi there! 👋",
     "subtitle": "Let's figure out any topic together",
-    "telegram": "Log in with Telegram",
-    "bot": "Log in with the Telegram bot",
-    "bot_code": "Open the bot and tap this number there:",
-    "bot_open": "Open Telegram",
-    "bot_waiting": "Waiting for confirmation in the bot…",
-    "bot_cancel": "Cancel",
-    "telegram_hint": "Already using the bot? Log in with Telegram — your points and topics are shared.",
-    "or": "or",
     "with_code": "I have a login and a code",
     "login_label": "Login",
     "login_placeholder": "e.g. timur123",
@@ -21,7 +13,6 @@
     "code_placeholder": "6 digits",
     "submit": "Log in",
     "code_hint": "Your mom, dad or teacher gets your login and code in the Telegram bot.",
-    "widget_unavailable": "Telegram login is not set up yet.",
     "privacy": "Privacy policy"
   },
   "home": {
@@ -337,24 +328,6 @@
     "evening_time": "Evening quiz reminder",
     "evening_time_hint": "Your child at this time, you an hour later if the quiz isn't done yet (no later than 20:30). At most once a day, silence after 21:00."
   },
-  "phone": {
-    "title": "Log in with your phone number",
-    "label": "Phone number",
-    "send": "Get a code by SMS",
-    "sent": "Code sent to {phone}",
-    "code": "SMS code",
-    "change": "Different number",
-    "resend": "Resend the code",
-    "resend_in": "Resend in {s} s"
-  },
-  "welcome": {
-    "title": "Let's get to know you",
-    "who": "Who are you?",
-    "student": "Student",
-    "parent": "Parent",
-    "name": "Name",
-    "go": "Continue"
-  },
   "family": {
     "title": "Family",
     "members": "Who's in the family",
@@ -491,7 +464,14 @@
     "in_other_family": "You're already in another family.",
     "family_full_adults": "The family already has the maximum of 4 adults.",
     "family_full_children": "The family already has the maximum of 6 children.",
-    "try_again": "Please try again."
+    "try_again": "Please try again.",
+    "not_enough_points": "Not enough points to trade.",
+    "not_enough_coins": "Not enough coins.",
+    "item_locked": "This item unlocks at a higher level.",
+    "item_owned": "You already have this item.",
+    "item_not_owned": "Buy this item first.",
+    "unknown_item": "There’s no such item in the shop.",
+    "bad_exchange": "Trade points in tens."
   },
   "privacy": {
     "title": "Privacy policy",
@@ -515,5 +495,66 @@
     "s8_text": "A parent can delete all of the child's data at any time: in the bot open “Profile” → “Delete data”. You can also request a copy of the data or ask a question using the contacts above.",
     "s9_title": "Protection",
     "s9_text": "Logging in to the site is protected by a Telegram signature or a code, the connection is encrypted (HTTPS), and login attempts are limited. Login codes are stored only as hashes."
+  },
+  "avatar": {
+    "title": "My rhino",
+    "home_card": "My rhino",
+    "home_hint": "Trade points for coins and dress up your character",
+    "level": "Level {level}",
+    "grows_at": "Grows up at level {level}",
+    "max_stage": "Fully grown — you’re a champion!",
+    "coins": "Coins",
+    "free_points": "Points to trade",
+    "exchange_title": "Trade points",
+    "exchange_rate": "{points} ⭐ = 1 🪙",
+    "exchange_get": "Get {coins} 🪙 for {points} ⭐",
+    "exchange_max": "All",
+    "exchange_none": "Nothing to trade yet — finish a topic to earn points. Trading never lowers your level.",
+    "shop_title": "Shop",
+    "buy": "Buy for {price} 🪙",
+    "wear": "Wear",
+    "take_off": "Take off",
+    "worn": "Wearing",
+    "owned": "Owned",
+    "locked": "🔒 level {level}+",
+    "need_coins": "{n} 🪙 short",
+    "slots": {
+      "hat": "Hats",
+      "outfit": "Outfits",
+      "glasses": "Glasses",
+      "extra": "Accessories",
+      "background": "Background"
+    },
+    "stages": {
+      "baby": "Baby",
+      "kid": "Pupil",
+      "teen": "Teen",
+      "champion": "Champion"
+    },
+    "items": {
+      "cap": "Cap",
+      "headphones": "Headphones",
+      "wizard_hat": "Wizard hat",
+      "grad_cap": "Graduation cap",
+      "crown": "Crown",
+      "tshirt": "T-shirt",
+      "hoodie": "Hoodie",
+      "school_uniform": "School uniform",
+      "tuxedo": "Tuxedo",
+      "superhero": "Superhero suit",
+      "astronaut": "Space suit",
+      "knight": "Knight armour",
+      "round_glasses": "Round glasses",
+      "sunglasses": "Sunglasses",
+      "star_glasses": "Star glasses",
+      "scarf": "Scarf",
+      "backpack": "Backpack",
+      "cape": "Hero cape",
+      "medal": "Gold medal",
+      "park": "Park",
+      "sea": "Sea",
+      "classroom": "Classroom",
+      "space": "Space"
+    }
   }
 }

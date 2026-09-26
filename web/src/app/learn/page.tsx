@@ -9,6 +9,7 @@ import { api, errorCode } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 import { shrinkImage } from "@/lib/image";
+import { GRADES } from "@/lib/subjects";
 import type { Topic } from "@/lib/types";
 
 const SUBJECTS = [
@@ -21,7 +22,6 @@ const SUBJECTS = [
   ["history", "🏛️"],
   ["other", "✨"],
 ] as const;
-const GRADES = Array.from({ length: 11 }, (_, i) => i + 1);
 
 function LearnForm() {
   const t = useT();
@@ -31,7 +31,7 @@ function LearnForm() {
 
   const [title, setTitle] = useState("");
   const [subject, setSubject] = useState<string>("math");
-  const [grade, setGrade] = useState<number>(me?.student?.grade ?? 5);
+  const [grade, setGrade] = useState<number>(Math.max(5, me?.student?.grade ?? 5));
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -131,17 +131,18 @@ function LearnForm() {
 
         <fieldset>
           <legend className="label">{t("learn.subject")}</legend>
-          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2">
+          {/* 8 предметов — две ровные строки по 4 */}
+          <div className="grid grid-cols-4 gap-2">
             {SUBJECTS.map(([key, icon]) => (
               <button
                 key={key}
                 type="button"
-                className="chip"
+                className="chip min-h-[4.25rem] min-w-0 flex-col justify-center gap-0.5 rounded-2xl px-1 py-2 text-xs leading-tight sm:text-sm"
                 aria-pressed={subject === key}
                 onClick={() => setSubject(key)}
               >
-                <span aria-hidden="true">{icon}</span>
-                {t(`subjects.${key}`)}
+                <span className="text-2xl leading-none" aria-hidden="true">{icon}</span>
+                <span className="max-w-full truncate">{t(`subjects.${key}`)}</span>
               </button>
             ))}
           </div>
@@ -149,7 +150,7 @@ function LearnForm() {
 
         <fieldset>
           <legend className="label">{t("learn.grade")}</legend>
-          <div className="grid grid-cols-6 gap-2">
+          <div className="grid grid-cols-7 gap-1.5">
             {GRADES.map((g) => (
               <button
                 key={g}

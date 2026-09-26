@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import io
 from datetime import timezone
-from typing import Literal
+from typing import Callable, Literal
 
 import segno
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -28,15 +28,33 @@ def get_sms_sender(request: Request) -> sms.SmsSender:
     return sender
 
 
+def get_telegram_sender(request: Request) -> Callable[[int], sms.SmsSender]:
+    """chat_id → отправитель кода через бота (в тестах подменяется в app.state)."""
+    factory = getattr(request.app.state, "telegram_sms", None)
+    return factory or (lambda chat_id: sms.TelegramSender(get_settings().bot_token, chat_id))
+
+
 class SmsRequestIn(BaseModel):
     phone: str = Field(min_length=9, max_length=20)
     lang: Literal["ru", "uz", "en"] = "uz"
+    # telegram — код от нашего бота, если номером поделились в боте (бесплатно, без SMS)
+    channel: Literal["sms", "telegram"] = "sms"
 
 
 @router.post("/auth/sms/request")
-async def sms_request(body: SmsRequestIn, session: AsyncSession = Depends(get_session), sender: sms.SmsSender = Depends(get_sms_sender)):
+async def sms_request(
+    body: SmsRequestIn,
+    session: AsyncSession = Depends(get_session),
+    sender: sms.SmsSender = Depends(get_sms_sender),
+    telegram_sender: Callable[[int], sms.SmsSender] = Depends(get_telegram_sender),
+):
     settings = get_settings()
     try:
+        if body.channel == "telegram":
+            chat_id = await sms.telegram_chat(session, body.phone) if settings.bot_token else None
+            if chat_id is None:
+                raise sms.SmsError("tg_not_linked", 409, bot_username=settings.bot_username or None)
+            sender = telegram_sender(chat_id)
         phone = await sms.request_code(session, body.phone, sender, body.lang, settings)
     except sms.SmsError as exc:
         raise HTTPException(exc.status, detail={"code": exc.code, **exc.extra})
@@ -60,7 +78,7 @@ async def sms_verify(body: SmsVerifyIn, session: AsyncSession = Depends(get_sess
 class RoleIn(BaseModel):
     role: Literal["student", "parent"]
     name: str | None = Field(None, max_length=100)
-    grade: int | None = Field(None, ge=1, le=11)
+    grade: int | None = Field(None, ge=5, le=11)
 
 
 @router.post("/me/role")

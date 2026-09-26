@@ -13,7 +13,7 @@ from sqlalchemy import text
 
 from app.api.ratelimit import RateLimitMiddleware
 from app.api.routers import (
-    account, auth, explain, family, journal, me, push, support, teacher_checks, teacher_materials,
+    account, auth, avatar, explain, family, journal, me, push, support, teacher_checks, teacher_materials,
 )
 from app.services import web_push
 from app.core.config import Settings, get_settings
@@ -86,6 +86,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(family.router)
     app.include_router(account.router)
     app.include_router(push.router)
+    app.include_router(avatar.router)
 
     @app.get("/api/health")
     async def health():

@@ -220,5 +220,6 @@
   "push_evening_missed_title": "🌙 {name} hasn't done the evening quiz yet",
   "push_evening_missed_body": "Only 2 minutes. A gentle reminder can help — no pressure 🙂",
   "reg_next_parent": "Now register your child: they'll learn in the EDU app and you'll get their progress here.",
-  "reg_next_teacher": "Add your students: each gets access to the EDU app, and you get class stats and work checking."
+  "reg_next_teacher": "Add your students: each gets access to the EDU app, and you get class stats and work checking.",
+  "phonelink_ready": "✅ Your number is linked. Go back to the website and tap “Get code in Telegram” — the code will arrive here."
 }

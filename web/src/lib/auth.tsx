@@ -14,17 +14,9 @@ type AuthState = {
   status: Status;
   me: Me | null;
   isMiniApp: boolean;
-  loginTelegram: (payload: {
-    widget?: Record<string, unknown>;
-    init_data?: string;
-    /** Страница входа: student — обычная, teacher — ментора */
-    as_role?: "student" | "teacher";
-  }) => Promise<void>;
+  /** Mini App внутри бота: вход по initData */
+  loginTelegram: (payload: { init_data: string }) => Promise<void>;
   loginCode: (login: string, code: string) => Promise<void>;
-  /** Вход по номеру телефона: код из SMS */
-  loginSms: (phone: string, code: string) => Promise<Me>;
-  /** Вход через бота: true — вход подтверждён и выполнен, false — ещё ждём. */
-  pollBotLogin: (loginToken: string) => Promise<boolean>;
   logout: () => void;
   logoutEverywhere: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -83,28 +75,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (login, code) => {
       const r = await api<{ token: string; me: Me }>("/auth/code", { method: "POST", json: { login, code } });
       signIn(r.token, r.me);
-    },
-    [signIn],
-  );
-
-  const loginSms = useCallback<AuthState["loginSms"]>(
-    async (phone, code) => {
-      const r = await api<{ token: string; me: Me }>("/v1/auth/sms/verify", { method: "POST", json: { phone, code } });
-      signIn(r.token, r.me);
-      return r.me;
-    },
-    [signIn],
-  );
-
-  const pollBotLogin = useCallback<AuthState["pollBotLogin"]>(
-    async (loginToken) => {
-      const r = await api<{ status?: string; token?: string; me?: Me }>("/auth/bot/poll", {
-        method: "POST",
-        json: { token: loginToken },
-      });
-      if (!r.token || !r.me) return false;
-      signIn(r.token, r.me);
-      return true;
     },
     [signIn],
   );
@@ -168,9 +138,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
-      status, me, isMiniApp, loginTelegram, loginCode, loginSms, pollBotLogin, logout, logoutEverywhere, refresh, saveSettings,
+      status, me, isMiniApp, loginTelegram, loginCode, logout, logoutEverywhere, refresh, saveSettings,
     }),
-    [status, me, isMiniApp, loginTelegram, loginCode, loginSms, pollBotLogin, logout, logoutEverywhere, refresh, saveSettings],
+    [status, me, isMiniApp, loginTelegram, loginCode, logout, logoutEverywhere, refresh, saveSettings],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

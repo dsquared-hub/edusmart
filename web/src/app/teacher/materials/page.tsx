@@ -8,6 +8,7 @@ import { RequireTeacher } from "@/components/RequireTeacher";
 import { Dots, IconButton, Notice, Page } from "@/components/ui";
 import { api, errorCode } from "@/lib/api";
 import { useT } from "@/lib/i18n";
+import { GRADES } from "@/lib/subjects";
 import type { Material, Textbook } from "@/lib/types";
 
 const SUBJECTS = ["math", "russian", "uzbek", "english", "physics", "nature", "history", "other"];
@@ -78,7 +79,7 @@ function UploadTextbook({ onDone }: { onDone: () => void }) {
         </select>
         <select className="field" value={grade} onChange={(e) => setGrade(e.target.value)} aria-label={t("learn.grade")}>
           <option value="">{t("learn.grade")}</option>
-          {Array.from({ length: 11 }, (_, i) => i + 1).map((g) => (
+          {GRADES.map((g) => (
             <option key={g} value={g}>
               {g}
             </option>

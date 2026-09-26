@@ -220,5 +220,6 @@
   "push_evening_missed_title": "🌙 {name} hali kechki testni topshirmadi",
   "push_evening_missed_body": "Bor-yo‘g‘i 2 daqiqa. Yumshoq eslatib qo‘yish mumkin — bosimsiz 🙂",
   "reg_next_parent": "Endi farzandingizni ro‘yxatdan o‘tkazing: u EDU ilovasida o‘qiydi, siz esa uning yutuqlarini shu yerda olasiz.",
-  "reg_next_teacher": "O‘quvchilarni qo‘shing: har biri EDU ilovasiga kirish oladi, siz esa sinf statistikasi va ishlarni tekshirishni."
+  "reg_next_teacher": "O‘quvchilarni qo‘shing: har biri EDU ilovasiga kirish oladi, siz esa sinf statistikasi va ishlarni tekshirishni.",
+  "phonelink_ready": "✅ Raqam bog‘landi. Saytga qayting va «Kodni Telegramda olish» tugmasini bosing — kod shu yerga keladi."
 }

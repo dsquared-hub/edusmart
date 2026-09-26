@@ -6,14 +6,6 @@
   "login": {
     "title": "Salom! 👋",
     "subtitle": "Istalgan mavzuni birga tushunib olamiz",
-    "telegram": "Telegram orqali kirish",
-    "bot": "Telegram-bot orqali kirish",
-    "bot_code": "Botni och va u yerda shu sonni bos:",
-    "bot_open": "Telegramni ochish",
-    "bot_waiting": "Botda tasdiqlash kutilmoqda…",
-    "bot_cancel": "Bekor qilish",
-    "telegram_hint": "Botdan foydalanayotgan boʻlsang, Telegram orqali kir — ballar va mavzular umumiy.",
-    "or": "yoki",
     "with_code": "Menda login va kod bor",
     "login_label": "Login",
     "login_placeholder": "masalan, timur123",
@@ -21,7 +13,6 @@
     "code_placeholder": "6 ta raqam",
     "submit": "Kirish",
     "code_hint": "Login va kodni onang, otang yoki oʻqituvching Telegram-botda beradi.",
-    "widget_unavailable": "Telegram orqali kirish hali sozlanmagan.",
     "privacy": "Maxfiylik siyosati"
   },
   "home": {
@@ -337,24 +328,6 @@
     "evening_time": "Kechki test haqida eslatma",
     "evening_time_hint": "Farzandga — shu vaqtda, sizga — bir soatdan keyin, agar test hali topshirilmagan boʻlsa (20:30 dan kechiktirmay). Kuniga bir martadan koʻp emas, 21:00 dan keyin — jimlik."
   },
-  "phone": {
-    "title": "Telefon raqami orqali kirish",
-    "label": "Telefon raqami",
-    "send": "SMS orqali kod olish",
-    "sent": "Kod {phone} raqamiga yuborildi",
-    "code": "SMS-kod",
-    "change": "Boshqa raqam",
-    "resend": "Kodni qayta yuborish",
-    "resend_in": "{s} soniyadan keyin qayta"
-  },
-  "welcome": {
-    "title": "Keling, tanishamiz",
-    "who": "Siz kimsiz?",
-    "student": "Oʻquvchi",
-    "parent": "Ota-ona",
-    "name": "Ism",
-    "go": "Davom etish"
-  },
   "family": {
     "title": "Oila",
     "members": "Oilada kimlar bor",
@@ -491,7 +464,14 @@
     "in_other_family": "Siz allaqachon boshqa oilaga aʼzosiz.",
     "family_full_adults": "Oilada kattalar soni maksimal (4).",
     "family_full_children": "Oilada bolalar soni maksimal (6).",
-    "try_again": "Qaytadan urinib koʻring."
+    "try_again": "Qaytadan urinib koʻring.",
+    "not_enough_points": "Almashtirish uchun ball yetmaydi.",
+    "not_enough_coins": "Koin yetmaydi.",
+    "item_locked": "Bu narsa yuqoriroq darajada ochiladi.",
+    "item_owned": "Bu narsa sizda allaqachon bor.",
+    "item_not_owned": "Avval bu narsani sotib oling.",
+    "unknown_item": "Do‘konda bunday narsa yo‘q.",
+    "bad_exchange": "Ballarni o‘ntalab almashtiring."
   },
   "privacy": {
     "title": "Maxfiylik siyosati",
@@ -515,5 +495,66 @@
     "s8_text": "Ota-ona istalgan vaqtda farzandining barcha maʼlumotlarini oʻchirishi mumkin: botda «Profil» → «Maʼlumotlarni oʻchirish»ni oching. Shuningdek, yuqoridagi kontaktlar orqali maʼlumotlar nusxasini soʻrash yoki savol berish mumkin.",
     "s9_title": "Himoya",
     "s9_text": "Saytga kirish Telegram imzosi yoki kod bilan himoyalangan, aloqa shifrlanadi (HTTPS), kirish urinishlari soni cheklangan. Kirish kodlari faqat xesh koʻrinishida saqlanadi."
+  },
+  "avatar": {
+    "title": "Mening karkidonim",
+    "home_card": "Mening karkidonim",
+    "home_hint": "Ballarni koinlarga almashtir va qahramoningni kiyintir",
+    "level": "{level}-daraja",
+    "grows_at": "{level}-darajada o‘sadi",
+    "max_stage": "Eng katta bo‘yi — sen chempionsan!",
+    "coins": "Koinlar",
+    "free_points": "Almashtirish uchun ballar",
+    "exchange_title": "Ballarni almashtirish",
+    "exchange_rate": "{points} ⭐ = 1 🪙",
+    "exchange_get": "{points} ⭐ evaziga {coins} 🪙 olish",
+    "exchange_max": "Hammasi",
+    "exchange_none": "Hozircha almashtiradigan narsa yo‘q — mavzu o‘tib, ball yig‘. Almashtirishdan daraja tushmaydi.",
+    "shop_title": "Do‘kon",
+    "buy": "{price} 🪙 ga sotib olish",
+    "wear": "Kiyish",
+    "take_off": "Yechish",
+    "worn": "Kiyilgan",
+    "owned": "Sotib olingan",
+    "locked": "🔒 {level}-darajadan",
+    "need_coins": "{n} 🪙 yetmaydi",
+    "slots": {
+      "hat": "Bosh kiyim",
+      "outfit": "Kiyim",
+      "glasses": "Ko‘zoynak",
+      "extra": "Aksessuarlar",
+      "background": "Fon"
+    },
+    "stages": {
+      "baby": "Chaqaloq",
+      "kid": "O‘quvchi",
+      "teen": "O‘smir",
+      "champion": "Chempion"
+    },
+    "items": {
+      "cap": "Kepka",
+      "headphones": "Quloqchin",
+      "wizard_hat": "Sehrgar shlyapasi",
+      "grad_cap": "Bitiruvchi shapkasi",
+      "crown": "Toj",
+      "tshirt": "Futbolka",
+      "hoodie": "Xudi",
+      "school_uniform": "Maktab formasi",
+      "tuxedo": "Smoking",
+      "superhero": "Superqahramon kostyumi",
+      "astronaut": "Skafandr",
+      "knight": "Ritsar sovuti",
+      "round_glasses": "Dumaloq ko‘zoynak",
+      "sunglasses": "Quyosh ko‘zoynagi",
+      "star_glasses": "Yulduz ko‘zoynak",
+      "scarf": "Sharf",
+      "backpack": "Ryukzak",
+      "cape": "Qahramon plashi",
+      "medal": "Oltin medal",
+      "park": "Bog‘",
+      "sea": "Dengiz",
+      "classroom": "Sinfxona",
+      "space": "Koinot"
+    }
   }
 }

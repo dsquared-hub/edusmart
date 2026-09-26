@@ -10,7 +10,7 @@ import { Page, Splash } from "./ui";
 const isAdult = (role: string | null | undefined) => role === "parent" || role === "teacher";
 
 /** Страницы учеников: гость → /login, родитель/учитель → журнал результатов,
- *  без роли → подсказка про бота. */
+ *  без роли — подсказка. */
 export function RequireStudent({ children }: { children: ReactNode }) {
   const { status, me } = useAuth();
   const router = useRouter();
@@ -22,12 +22,10 @@ export function RequireStudent({ children }: { children: ReactNode }) {
       router.replace(`/login?next=${encodeURIComponent(next)}`);
     } else if (status === "authed" && isAdult(me?.role)) {
       router.replace("/journal");
-    } else if (status === "authed" && me && !me.role) {
-      router.replace("/welcome"); // первый вход по номеру телефона — сначала выбрать роль
     }
   }, [status, me, router]);
 
-  if (status !== "authed" || !me || isAdult(me.role) || !me.role) return <Splash />;
+  if (status !== "authed" || !me || isAdult(me.role)) return <Splash />;
 
   if (me.role !== "student") {
     return (

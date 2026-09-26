@@ -167,7 +167,9 @@ async def test_evening_reminders_timing(h, adults_only):
     await _register_parent(h)
     await h.press(MOM, "reg:child", name="Мама")
     await h.send(MOM, "Тимур", name="Мама")
-    await h.press(MOM, "reg:grade:3", name="Мама")
+    await h.press(MOM, "reg:grade:3", name="Мама")  # 1–4 классов нет — кнопка из старого сообщения
+    assert "reg:grade:5" in h.callback_data(h.api.last(MOM))
+    await h.press(MOM, "reg:grade:6", name="Мама")
     await h.press(MOM, "reg:consent", name="Мама")
     today = local_now()
 
@@ -187,3 +189,22 @@ async def test_evening_reminders_timing(h, adults_only):
     assert await parent_reminders(h.bot, today.replace(hour=20, minute=30)) == 1  # не позже 20:30
     async with SessionLocal() as s:
         assert await s.scalar(select(Event.type).order_by(Event.id.desc())) == "evening_missed"
+
+
+async def test_phone_link_from_site(h, adults_only):
+    """Сайт → /start phone: взрослый без номера делится им, и коды входа приходят в бот."""
+    await _register_parent(h, phone=None)
+    await h.send(MOM, "/start phone", name="Мама")
+    assert _reply_buttons(h.api.last(MOM))[0].request_contact
+    await _contact(h, MOM, "+998 90 555 44 33")
+    assert "Номер привязан" in h.api.last(MOM).text  # без повторного «регистрация завершена»
+    async with SessionLocal() as s:
+        assert (await get_by_telegram(s, MOM)).phone == "+998905554433"
+
+    await h.send(MOM, "/start phone", name="Мама")  # номер уже есть — сразу на сайт
+    assert "Номер привязан" in h.api.last(MOM).text
+
+
+async def test_phone_link_for_newcomer_starts_registration(h, adults_only):
+    await h.send(KID, "/start phone", name="Новичок")
+    assert "role:parent" in h.callback_data(h.api.last(KID))

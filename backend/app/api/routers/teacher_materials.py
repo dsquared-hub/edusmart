@@ -71,7 +71,7 @@ async def upload_textbook(
     file: UploadFile = File(...),
     title: str = Form(..., min_length=1, max_length=255),
     subject: str | None = Form(None),
-    grade: int | None = Form(None, ge=1, le=11),
+    grade: int | None = Form(None, ge=5, le=11),
     # Права на контент (ТЗ, раздел 5): учитель подтверждает основание загрузки
     license_note: str = Form(..., min_length=3, max_length=500),
     user: User = Depends(current_user),

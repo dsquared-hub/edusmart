@@ -79,7 +79,7 @@ async def upload_checks(
     files: list[UploadFile] = File(...),
     title: str = Form(..., min_length=1, max_length=255),
     subject: str | None = Form(None),
-    grade: int | None = Form(None, ge=1, le=11),
+    grade: int | None = Form(None, ge=5, le=11),
     task_text: str | None = Form(None, max_length=4000),
     answer_key: str | None = Form(None, max_length=4000),
     max_score: int = Form(5, ge=1, le=100),

@@ -107,6 +107,10 @@ class Student(Base):
     last_reminded_on: Mapped[date | None] = mapped_column(Date)
     # Родителю — одно мягкое напоминание в день, если тест ещё не пройден
     parent_reminded_on: Mapped[date | None] = mapped_column(Date)
+    # Магазин персонажа: очки обмениваются на коины. Уровень считается по всем
+    # заработанным очкам (points), обмен его не снижает — тратится только остаток.
+    coins: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    points_exchanged: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
 
 class ParentLink(Base):
@@ -661,3 +665,18 @@ class Event(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     processed_at: Mapped[datetime | None] = mapped_column(DateTime, index=True)
     pushed_at: Mapped[datetime | None] = mapped_column(DateTime, index=True)
+
+
+class StudentItem(Base):
+    """Вещь персонажа, купленная учеником за коины (каталог — в services/avatar.py)."""
+
+    __tablename__ = "student_items"
+    __table_args__ = (UniqueConstraint("user_id", "item_code"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("students.user_id", ondelete="CASCADE"), index=True
+    )
+    item_code: Mapped[str] = mapped_column(String(32))
+    equipped: Mapped[bool] = mapped_column(Boolean, default=False)
+    bought_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)

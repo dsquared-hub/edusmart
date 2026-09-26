@@ -90,10 +90,14 @@ class Settings(BaseSettings):
     ers_mastery_threshold: float = 0.8  # тема освоена — 80%+ по последним попыткам
 
     # Модуль 4: вход по SMS и семейный аккаунт
-    sms_provider: str = "log"  # log — код в лог (разработка) | eskiz — Eskiz.uz
+    sms_provider: str = "log"  # log — код в лог (разработка) | eskiz — Eskiz.uz | smsgate — свой Android
     eskiz_email: str = ""
     eskiz_password: str = ""
     eskiz_from: str = "4546"
+    # SMS Gateway for Android (sms-gate.app): SMS уходят с SIM-карты телефона
+    sms_gate_url: str = "https://api.sms-gate.app/3rdparty/v1/messages"
+    sms_gate_user: str = ""
+    sms_gate_password: str = ""
     sms_code_ttl: int = 300  # 5 минут
     sms_max_attempts: int = 5
     sms_resend_seconds: int = 60
